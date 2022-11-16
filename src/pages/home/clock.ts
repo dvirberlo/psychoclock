@@ -141,7 +141,7 @@ export class Clock {
       )
         this.notfier.minutesLeft(this.settings.secondsLeftCount / 60);
       if (
-        this.state.seconds ===
+        this.state.seconds >=
         (this.state.inEssay
           ? this.settings.essaySeconds
           : this.settings.chapterSeconds)
