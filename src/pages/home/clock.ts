@@ -1,4 +1,5 @@
 import { Notifier, VoiceNotifier } from "./notifier";
+import { ScreenWaker } from "./screen-waker";
 
 export type ClockCB = {
   chapterIndex: number;
@@ -33,14 +34,14 @@ export type ClockSettings = {
 };
 export const DEFAULT_SETTINGS: ClockSettings = {
   withEssay: true,
-  essaySeconds: 36,
+  essaySeconds: 30 * 60,
 
-  chaptersCount: 2,
-  chapterSeconds: 30,
+  chaptersCount: 8,
+  chapterSeconds: 20 * 60,
 
   notifyEnds: true,
   notifyMinutesLeft: true,
-  secondsLeftCount: 6,
+  secondsLeftCount: 5 * 60,
 
   resetVisualClockEssay: true,
   resetVisualClockChapter: true,
@@ -48,8 +49,9 @@ export const DEFAULT_SETTINGS: ClockSettings = {
 Object.freeze(DEFAULT_SETTINGS);
 
 export class Clock {
-  private notfier: Notifier;
   public readonly settings: ClockSettings;
+  private notfier: Notifier;
+  private waker = new ScreenWaker();
   public state: ClockState = {
     chapterIndex: 0,
     seconds: 0,
@@ -82,6 +84,7 @@ export class Clock {
   }
 
   public resetClock() {
+    this.waker.releaseScreen();
     this.state.inEssay = this.settings.withEssay;
     this.state.chapterIndex = 0;
     this.state.totalSeconds = 0;
@@ -98,12 +101,14 @@ export class Clock {
   }
 
   public stopClock() {
+    this.waker.releaseScreen();
     this.notfier.cancel();
     this.state.lastActionTime = -1;
     this.state.isRunning = false;
   }
 
   private finished() {
+    this.waker.releaseScreen();
     if (this.settings.notifyEnds) {
       this.notfier.end();
     }
@@ -111,6 +116,7 @@ export class Clock {
   }
 
   public continueClock(started = false) {
+    this.waker.keepScreenOn();
     this.formatStateCB();
     if (!started) this.notfier.continue();
 
