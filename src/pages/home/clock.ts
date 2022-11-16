@@ -9,15 +9,6 @@ export type ClockCB = {
   seconds: number;
 };
 
-export type ClockState = {
-  chapterIndex: number;
-  totalSeconds: number;
-  seconds: number;
-  inEssay: boolean;
-  isRunning: boolean;
-  lastActionTime: number;
-};
-
 export type ClockSettings = {
   withEssay: boolean;
   essaySeconds: number;
@@ -52,13 +43,13 @@ export class Clock {
   public readonly settings: ClockSettings;
   private notfier: Notifier;
   private waker = new ScreenWaker();
-  public state: ClockState = {
+  public state = {
     chapterIndex: 0,
     seconds: 0,
     totalSeconds: 0,
     inEssay: false,
     isRunning: false,
-    lastActionTime: -1,
+    lastTickTock: -1,
   };
 
   constructor(
@@ -79,32 +70,35 @@ export class Clock {
       inEssay: this.state.inEssay,
       hours: Math.floor(this.state.seconds / 3600),
       minutes: Math.floor(this.state.seconds / 60),
-      seconds: this.state.seconds % 60,
+      seconds: Math.floor(this.state.seconds % 60),
     });
   }
 
   public resetClock() {
     this.waker.releaseScreen();
+    this.notfier.cancel();
     this.state.inEssay = this.settings.withEssay;
     this.state.chapterIndex = 0;
     this.state.totalSeconds = 0;
     this.state.seconds = 0;
     this.state.isRunning = false;
-    this.state.lastActionTime = -1;
+    this.state.lastTickTock = -1;
     this.formatStateCB();
   }
 
   public startClock() {
-    this.notfier.start();
     this.resetClock();
+    this.notfier.start();
     this.continueClock(true);
   }
 
   public stopClock() {
     this.waker.releaseScreen();
     this.notfier.cancel();
-    this.state.lastActionTime = -1;
-    this.state.isRunning = false;
+    this.ticktock().then(() => {
+      this.state.isRunning = false;
+      this.state.lastTickTock = -1;
+    });
   }
 
   private finished() {
@@ -122,47 +116,52 @@ export class Clock {
 
     // Note: this function uses ClockSettings by reference, so it will be updated automatically, if the settings change.
     // also, it's a stopwatch, not a timer
-    const newActionTime = Date.now();
-    this.state.lastActionTime = newActionTime;
+    this.state.lastTickTock = Date.now();
     this.state.isRunning = true;
-    const interval = setInterval(() => {
-      if (this.state.lastActionTime != newActionTime) {
-        clearInterval(interval);
-        return;
-      }
-      this.state.totalSeconds += 1;
-      this.state.seconds += 1;
-      if (
-        this.settings.notifyMinutesLeft &&
-        this.settings.secondsLeftCount + this.state.seconds ===
-          (this.state.inEssay
-            ? this.settings.essaySeconds
-            : this.settings.chapterSeconds)
-      )
-        this.notfier.minutesLeft(this.settings.secondsLeftCount / 60);
-      if (
-        this.state.seconds >=
+    const interval = requestAnimationFrame(() => this.ticktock());
+  }
+
+  private async ticktock() {
+    if (!this.state.isRunning) {
+      // clearInterval(interval);
+      return;
+    }
+    const now = Date.now();
+    const deltaSeconds = (now - this.state.lastTickTock) / 1000;
+    this.state.lastTickTock = now;
+    setTimeout(() => requestAnimationFrame(() => this.ticktock()), 1000);
+    this.state.totalSeconds += deltaSeconds;
+    this.state.seconds += deltaSeconds;
+    if (
+      this.settings.notifyMinutesLeft &&
+      this.settings.secondsLeftCount + this.state.seconds ===
         (this.state.inEssay
           ? this.settings.essaySeconds
           : this.settings.chapterSeconds)
+    )
+      this.notfier.minutesLeft(this.settings.secondsLeftCount / 60);
+    if (
+      this.state.seconds >=
+      (this.state.inEssay
+        ? this.settings.essaySeconds
+        : this.settings.chapterSeconds)
+    ) {
+      const chapterIndex = this.state.chapterIndex + 1;
+      if (this.settings.notifyEnds) this.notfier.nextChapter();
+      if (
+        chapterIndex ===
+        this.settings.chaptersCount + (this.settings.withEssay ? 1 : 0)
       ) {
-        const chapterIndex = this.state.chapterIndex + 1;
-        if (this.settings.notifyEnds) this.notfier.nextChapter();
-        if (
-          chapterIndex ===
-          this.settings.chaptersCount + (this.settings.withEssay ? 1 : 0)
-        ) {
-          this.state.isRunning = false;
-          clearInterval(interval);
-          this.finished();
-          return;
-        }
-        this.state.chapterIndex = chapterIndex;
-        // essay is always first
-        this.state.inEssay = false;
-        this.state.seconds = 0;
+        this.state.isRunning = false;
+        // clearInterval(interval);
+        this.finished();
+        return;
       }
-      this.formatStateCB();
-    }, 1000);
+      this.state.chapterIndex = chapterIndex;
+      // essay is always first
+      this.state.inEssay = false;
+      this.state.seconds = 0;
+    }
+    this.formatStateCB();
   }
 }
