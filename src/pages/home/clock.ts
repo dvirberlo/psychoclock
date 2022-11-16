@@ -79,7 +79,7 @@ export class Clock {
         : this.settings.essaySeconds) +
       (this.settings.resetVisualClockChapter
         ? 0
-        : this.state.chapterIndex * this.settings.chapterSeconds) +
+        : (this.state.chapterIndex - 1) * this.settings.chapterSeconds) +
       this.state.seconds;
     this.clockCB({
       chapterIndex: this.state.chapterIndex,
