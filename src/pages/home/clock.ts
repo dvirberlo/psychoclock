@@ -51,8 +51,7 @@ export class Clock {
     this.settings = structuredClone(DEFAULT_SETTINGS);
   }
 
-  // TODO: what type is this settings field should be?
-  public setSettings(settings: any) {
+  public setSettings(settings: Partial<ClockSettings>) {
     Object.assign(this.settings, settings);
   }
 
@@ -60,19 +59,20 @@ export class Clock {
     const computedTotalSeconds =
       (this.settings.withEssay ? this.settings.essaySeconds : 0) +
       this.settings.chapterSeconds * this.settings.chaptersCount;
+    const percent = this.settings.totalPercent
+      ? (this.state.totalSeconds / computedTotalSeconds) * 100
+      : (this.state.seconds /
+          (this.state.inEssay
+            ? this.settings.essaySeconds
+            : this.settings.chapterSeconds)) *
+        100;
     this.clockCB({
       chapterIndex: this.state.chapterIndex,
       inEssay: this.state.inEssay,
       hours: Math.floor(this.state.seconds / 3600),
       minutes: Math.floor(this.state.seconds / 60),
       seconds: Math.floor(this.state.seconds % 60),
-      percent: this.settings.totalPercent
-        ? (this.state.totalSeconds / computedTotalSeconds) * 100
-        : (this.state.seconds /
-            (this.state.inEssay
-              ? this.settings.essaySeconds
-              : this.settings.chapterSeconds)) *
-          100,
+      percent: percent > 100 ? 100 : percent,
     });
   }
 
@@ -108,6 +108,7 @@ export class Clock {
     if (this.settings.notifyEnds) {
       this.notfier.end();
     }
+    this.formatStateCB();
     this.finishedCB();
   }
 
@@ -120,7 +121,7 @@ export class Clock {
     // also, it's a stopwatch, not a timer
     this.state.lastTickTock = Date.now();
     this.state.isRunning = true;
-    const interval = requestAnimationFrame(() => this.ticktock());
+    this.ticktock();
   }
 
   private async ticktock() {
@@ -131,10 +132,7 @@ export class Clock {
     const now = Date.now();
     const deltaSeconds = (now - this.state.lastTickTock) / 1000;
     this.state.lastTickTock = now;
-    setTimeout(
-      () => requestAnimationFrame(() => this.ticktock()),
-      CLOCK_INTERVAL
-    );
+    setTimeout(() => this.ticktock(), CLOCK_INTERVAL);
     this.state.totalSeconds += deltaSeconds;
     this.state.seconds += deltaSeconds;
     if (

@@ -1,28 +1,16 @@
 import {
-  ExpandMoreRounded as ExpandIcon,
   PauseRounded as StopIcon,
   PlayArrowRounded as ContinueIcon,
   PlayCircleFilledRounded as StartIcon,
   RestartAltRounded as ResetIcon,
-  SettingsRounded as SettingsIcon,
 } from "@mui/icons-material";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Button,
-  CircularProgress,
-  Container,
-  FormControlLabel,
-  Switch,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Button, CircularProgress, Container, Typography } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useState } from "react";
 import { Clock, ClockCB } from "./clock";
+import { DisplaySettingsSection, SettingsSection } from "./Settings";
 
-enum ClockMode {
+export enum ClockMode {
   On,
   Off,
   Paused,
@@ -38,7 +26,8 @@ export default function Home() {
   return (
     <Container>
       {ClockDisplay(clockMode, setClockMode, clock)}
-      {SettingsDisplay(clockMode, clock)}
+      <DisplaySettingsSection clock={clock} clockMode={clockMode} />
+      <SettingsSection clock={clock} clockMode={clockMode} />
     </Container>
   );
 }
@@ -51,6 +40,7 @@ function ClockDisplay(
   const [chapterIndex, setChapterIndex] = useState<number>(
     clock.state.chapterIndex
   );
+  const [hours, setHours] = useState<number>(clock.state.seconds);
   const [minutes, setMinutes] = useState<number>(clock.state.seconds);
   const [seconds, setSeconds] = useState<number>(clock.state.seconds);
   const [inEssay, setInEssay] = useState<boolean>(clock.settings.withEssay);
@@ -58,6 +48,7 @@ function ClockDisplay(
   clock.clockCB = (state: ClockCB) => {
     if (chapterIndex !== state.chapterIndex)
       setChapterIndex(state.chapterIndex);
+    if (hours !== state.hours) setHours(state.hours);
     if (minutes !== state.minutes) setMinutes(state.minutes);
     if (seconds !== state.seconds) setSeconds(state.seconds);
     if (inEssay !== state.inEssay) setInEssay(state.inEssay);
@@ -86,7 +77,7 @@ function ClockDisplay(
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        marginBlock: 11,
+        marginBlock: 13,
       }}
     >
       <CircularProgress
@@ -106,6 +97,7 @@ function ClockDisplay(
           : "Chapter " + (chapterIndex + (clock.settings.withEssay ? 0 : 1))}
       </Typography>
       <Typography variant="h4">
+        {hours > 0 ? hours.toString().padStart(2, "0") + " : " : ""}
         {minutes.toString().padStart(2, "0")} :{" "}
         {seconds.toString().padStart(2, "0")}
       </Typography>
@@ -141,220 +133,5 @@ function ClockDisplay(
         </Button>
       </Stack>
     </Stack>
-  );
-}
-
-function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
-  const [counter, stateUpdated] = useState(0);
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: "1rem",
-      }}
-    >
-      <Accordion
-        disabled={clockMode !== ClockMode.Off}
-        expanded={clockMode === ClockMode.Off}
-      >
-        <AccordionSummary expandIcon={<ExpandIcon />}>
-          <Typography
-            variant="h6"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <SettingsIcon />
-            Settings
-            <Typography variant="body1" sx={{ marginLeft: 2 }}>
-              {clockMode !== ClockMode.Off ? "reset clock to enable" : ""}
-            </Typography>
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ paddingInline: ".5rem" }}>
-          <Stack
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            spacing={1.5}
-          >
-            <Stack
-              direction="row"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={clock.settings.withEssay}
-                    onClick={(event) => {
-                      clock.setSettings({
-                        withEssay: !clock.settings.withEssay,
-                      });
-                      stateUpdated(counter + 1);
-                    }}
-                  />
-                }
-                label="Essay at start"
-                labelPlacement="end"
-              />
-              <TextField
-                sx={{
-                  marginInline: ".5rem",
-                }}
-                disabled={!clock.settings.withEssay}
-                inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
-                type="number"
-                variant="standard"
-                defaultValue={(clock.settings.essaySeconds / 60).toString()}
-                onChange={(event) => {
-                  clock.setSettings({
-                    essaySeconds: parseFloat(event.target.value) * 60,
-                  });
-                  stateUpdated(counter + 1);
-                }}
-              />
-              <Typography>minutes long</Typography>
-            </Stack>
-
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <TextField
-                inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
-                type="number"
-                variant="standard"
-                defaultValue={clock.settings.chaptersCount.toString()}
-                onChange={(event) => {
-                  clock.settings.chaptersCount = parseFloat(event.target.value);
-                  stateUpdated(counter + 1);
-                }}
-              />
-              <Typography> chapters.</Typography>
-              <Typography>each</Typography>
-              <TextField
-                disabled={clock.settings.chaptersCount < 1}
-                inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
-                type="number"
-                variant="standard"
-                defaultValue={(clock.settings.chapterSeconds / 60).toString()}
-                onChange={(event) => {
-                  clock.setSettings({
-                    chapterSeconds: parseFloat(event.target.value) * 60,
-                  });
-                  stateUpdated(counter + 1);
-                }}
-              />
-              <Typography>minutes long</Typography>
-            </Stack>
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={clock.settings.notifyMinutesLeft}
-                  onClick={(event) => {
-                    clock.setSettings({
-                      notifyMinutesLeft: !clock.settings.notifyMinutesLeft,
-                    });
-                    stateUpdated(counter + 1);
-                  }}
-                />
-              }
-              label={
-                <Stack direction="row" alignItems="center">
-                  <Typography>Notify when chapter or essay ends in</Typography>
-                  <TextField
-                    sx={{ marginInline: "0.5em" }}
-                    margin="none"
-                    disabled={!clock.settings.notifyMinutesLeft}
-                    inputProps={{
-                      min: 0,
-                      max: 99,
-                      style: { textAlign: "center" },
-                    }}
-                    type="number"
-                    variant="standard"
-                    defaultValue={(
-                      clock.settings.secondsLeftCount / 60
-                    ).toString()}
-                    onChange={(event) => {
-                      clock.setSettings({
-                        secondsLeftCount: parseFloat(event.target.value) * 60,
-                      });
-                      stateUpdated(counter + 1);
-                    }}
-                  />
-                  minutes
-                </Stack>
-              }
-              labelPlacement="end"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={clock.settings.notifyEnds}
-                  onClick={(event) => {
-                    clock.setSettings({
-                      notifyEnds: !clock.settings.notifyEnds,
-                    });
-                    stateUpdated(counter + 1);
-                  }}
-                />
-              }
-              label="Notify when chapter or essay ends"
-              labelPlacement="end"
-            />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={clock.settings.resetVisualClockEssay}
-                  onClick={(event) => {
-                    clock.setSettings({
-                      resetVisualClockEssay:
-                        !clock.settings.resetVisualClockEssay,
-                    });
-                    stateUpdated(counter + 1);
-                  }}
-                />
-              }
-              label="Reset clock when easay ends"
-              labelPlacement="end"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={clock.settings.resetVisualClockChapter}
-                  onClick={(event) => {
-                    clock.setSettings({
-                      resetVisualClockChapter:
-                        !clock.settings.resetVisualClockChapter,
-                    });
-                    stateUpdated(counter + 1);
-                  }}
-                />
-              }
-              label="Reset clock when chapter ends"
-              labelPlacement="end"
-            />
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
-    </div>
   );
 }
