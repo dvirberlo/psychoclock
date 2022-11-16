@@ -39,11 +39,13 @@ export const DEFAULT_SETTINGS: ClockSettings = {
 };
 Object.freeze(DEFAULT_SETTINGS);
 
+const CLOCK_INTERVAL = 500;
 export class Clock {
   public readonly settings: ClockSettings;
   private notfier: Notifier;
   private waker = new ScreenWaker();
   public state = {
+    notifiedMinutesLeft: false,
     chapterIndex: 0,
     seconds: 0,
     totalSeconds: 0,
@@ -129,17 +131,23 @@ export class Clock {
     const now = Date.now();
     const deltaSeconds = (now - this.state.lastTickTock) / 1000;
     this.state.lastTickTock = now;
-    setTimeout(() => requestAnimationFrame(() => this.ticktock()), 1000);
+    setTimeout(
+      () => requestAnimationFrame(() => this.ticktock()),
+      CLOCK_INTERVAL
+    );
     this.state.totalSeconds += deltaSeconds;
     this.state.seconds += deltaSeconds;
     if (
       this.settings.notifyMinutesLeft &&
-      this.settings.secondsLeftCount + this.state.seconds ===
+      !this.state.notifiedMinutesLeft &&
+      this.settings.secondsLeftCount + this.state.seconds >=
         (this.state.inEssay
           ? this.settings.essaySeconds
           : this.settings.chapterSeconds)
-    )
+    ) {
       this.notfier.minutesLeft(this.settings.secondsLeftCount / 60);
+      this.state.notifiedMinutesLeft = true;
+    }
     if (
       this.state.seconds >=
       (this.state.inEssay
@@ -147,6 +155,7 @@ export class Clock {
         : this.settings.chapterSeconds)
     ) {
       const chapterIndex = this.state.chapterIndex + 1;
+      this.state.notifiedMinutesLeft = false;
       if (this.settings.notifyEnds) this.notfier.nextChapter();
       if (
         chapterIndex ===
