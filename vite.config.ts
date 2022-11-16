@@ -17,7 +17,18 @@ export default defineConfig({
         name: "Psycho Clock",
         short_name: "PsychoClock",
         theme_color: "#000000",
-        icons: [],
+        icons: [
+          {
+            src: "/icons/app-black.svg",
+            sizes: "400x400",
+            type: "image/svg+xml",
+          },
+          {
+            src: "/favicon.ico",
+            sizes: "256x256",
+            type: "image/x-icon",
+          },
+        ],
         display: "standalone",
       },
     }),

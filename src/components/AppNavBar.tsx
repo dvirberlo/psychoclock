@@ -1,4 +1,3 @@
-import { TimerRounded as TitleAppIcon } from "@mui/icons-material";
 import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { Page } from "../Routing";
@@ -20,8 +19,11 @@ export default function AppNavBar({ pages }: { pages: Page[] }) {
             flexGrow: 1,
           }}
         >
-          <TitleAppIcon />
-          PsychoClock
+          <img
+            src="/icons/app-white.svg"
+            style={{ width: "1.5rem", marginRight: 4 }}
+          />
+          Psycho Clock
         </Typography>
         <Typography
           variant="body1"
