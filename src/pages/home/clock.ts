@@ -7,6 +7,7 @@ export type ClockCB = {
   hours: number;
   minutes: number;
   seconds: number;
+  percent: number;
 };
 
 export type ClockSettings = {
@@ -67,12 +68,17 @@ export class Clock {
   }
 
   private formatStateCB() {
+    const computedTotalSeconds =
+      (this.settings.withEssay ? this.settings.essaySeconds : 0) +
+      this.settings.chapterSeconds * this.settings.chaptersCount;
+    console.log(computedTotalSeconds, this.state.totalSeconds, this.settings);
     this.clockCB({
       chapterIndex: this.state.chapterIndex,
       inEssay: this.state.inEssay,
       hours: Math.floor(this.state.seconds / 3600),
       minutes: Math.floor(this.state.seconds / 60),
       seconds: Math.floor(this.state.seconds % 60),
+      percent: (this.state.totalSeconds / computedTotalSeconds) * 100,
     });
   }
 

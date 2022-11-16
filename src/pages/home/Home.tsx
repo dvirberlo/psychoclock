@@ -1,16 +1,17 @@
 import {
   ExpandMoreRounded as ExpandIcon,
+  PauseRounded as StopIcon,
   PlayArrowRounded as ContinueIcon,
   PlayCircleFilledRounded as StartIcon,
   RestartAltRounded as ResetIcon,
   SettingsRounded as SettingsIcon,
-  PauseRounded as StopIcon,
 } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Button,
+  CircularProgress,
   Container,
   FormControlLabel,
   Switch,
@@ -35,7 +36,7 @@ export default function Home() {
   clock.finishedCB = () => setClockMode(ClockMode.Off);
 
   return (
-    <Container sx={{ paddingTop: 3 }}>
+    <Container>
       {ClockDisplay(clockMode, setClockMode, clock)}
       {SettingsDisplay(clockMode, clock)}
     </Container>
@@ -53,12 +54,14 @@ function ClockDisplay(
   const [minutes, setMinutes] = useState<number>(clock.state.seconds);
   const [seconds, setSeconds] = useState<number>(clock.state.seconds);
   const [inEssay, setInEssay] = useState<boolean>(clock.settings.withEssay);
+  const [percent, setPercent] = useState<number>(0);
   clock.clockCB = (state: ClockCB) => {
     if (chapterIndex !== state.chapterIndex)
       setChapterIndex(state.chapterIndex);
     if (minutes !== state.minutes) setMinutes(state.minutes);
     if (seconds !== state.seconds) setSeconds(state.seconds);
     if (inEssay !== state.inEssay) setInEssay(state.inEssay);
+    if (percent !== state.percent) setPercent(state.percent);
   };
 
   const startClick = () => {
@@ -79,45 +82,64 @@ function ClockDisplay(
   };
   return (
     <Stack
-      sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBlock: 7,
+      }}
     >
-      <Typography variant="h6">
+      <CircularProgress
+        variant="determinate"
+        value={percent}
+        size={240}
+        thickness={1}
+        // color="secondary"
+        sx={{
+          position: "absolute",
+          zIndex: -1,
+        }}
+      />
+      <Typography variant="h3">
         {inEssay
           ? "Essay"
           : "Chapter " + (chapterIndex + (clock.settings.withEssay ? 0 : 1))}
       </Typography>
-      <Typography variant="h6">
+      <Typography variant="h4">
         {minutes.toString().padStart(2, "0")} :{" "}
         {seconds.toString().padStart(2, "0")}
       </Typography>
-      <Button
-        id="start"
-        startIcon={
+      <Stack direction="row">
+        <Button
+          size="large"
+          id="start"
+          startIcon={
+            {
+              [ClockMode.Off]: <StartIcon />,
+              [ClockMode.On]: <StopIcon />,
+              [ClockMode.Paused]: <ContinueIcon />,
+            }[clockMode]
+          }
+          onClick={
+            {
+              [ClockMode.Off]: startClick,
+              [ClockMode.On]: stopClick,
+              [ClockMode.Paused]: continueClick,
+            }[clockMode]
+          }
+        >
           {
-            [ClockMode.Off]: <StartIcon />,
-            [ClockMode.On]: <StopIcon />,
-            [ClockMode.Paused]: <ContinueIcon />,
-          }[clockMode]
-        }
-        onClick={
-          {
-            [ClockMode.Off]: startClick,
-            [ClockMode.On]: stopClick,
-            [ClockMode.Paused]: continueClick,
-          }[clockMode]
-        }
-      >
-        {
-          {
-            [ClockMode.Off]: "Start",
-            [ClockMode.On]: "Stop",
-            [ClockMode.Paused]: "Continue",
-          }[clockMode]
-        }
-      </Button>
-      <Button startIcon={<ResetIcon />} onClick={resetClick}>
-        Reset
-      </Button>
+            {
+              [ClockMode.Off]: "Start",
+              [ClockMode.On]: "Stop",
+              [ClockMode.Paused]: "Continue",
+            }[clockMode]
+          }
+        </Button>
+        <Button size="large" startIcon={<ResetIcon />} onClick={resetClick}>
+          Reset
+        </Button>
+      </Stack>
     </Stack>
   );
 }
