@@ -18,6 +18,7 @@ export default defineConfig({
         short_name: "PsychoClock",
         theme_color: "#000000",
         icons: [],
+        display: "standalone",
       },
     }),
   ],
