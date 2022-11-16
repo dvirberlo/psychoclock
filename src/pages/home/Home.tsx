@@ -82,7 +82,9 @@ function ClockDisplay(
       sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
     >
       <Typography variant="h6">
-        {inEssay ? "Essay" : "Chapter " + (chapterIndex + 1)}
+        {inEssay
+          ? "Essay"
+          : "Chapter " + (chapterIndex + (clock.settings.withEssay ? 0 : 1))}
       </Typography>
       <Typography variant="h6">
         {minutes.toString().padStart(2, "0")} :{" "}
