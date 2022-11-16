@@ -4,7 +4,7 @@ import {
   PlayCircleFilledRounded as StartIcon,
   RestartAltRounded as ResetIcon,
   SettingsRounded as SettingsIcon,
-  StopRounded as StopIcon,
+  PauseRounded as StopIcon,
 } from "@mui/icons-material";
 import {
   Accordion,
@@ -176,9 +176,11 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                 labelPlacement="end"
               />
               <TextField
+                sx={{
+                  marginInline: ".5rem",
+                }}
                 disabled={!clock.settings.withEssay}
-                inputProps={{ min: 0, max: 99 }}
-                sx={{ marginInline: "0.5em" }}
+                inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
                 type="number"
                 variant="standard"
                 defaultValue={(clock.settings.essaySeconds / 60).toString()}
@@ -202,7 +204,7 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
               }}
             >
               <TextField
-                inputProps={{ min: 0, max: 99 }}
+                inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
                 type="number"
                 variant="standard"
                 defaultValue={clock.settings.chaptersCount.toString()}
@@ -216,7 +218,7 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
               <Typography>each</Typography>
               <TextField
                 disabled={clock.settings.chaptersCount < 1}
-                inputProps={{ min: 0, max: 99 }}
+                inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
                 type="number"
                 variant="standard"
                 defaultValue={(clock.settings.chapterSeconds / 60).toString()}
@@ -248,7 +250,11 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                     sx={{ marginInline: "0.5em" }}
                     margin="none"
                     disabled={!clock.settings.notifyMinutesLeft}
-                    inputProps={{ min: 0, max: 99 }}
+                    inputProps={{
+                      min: 0,
+                      max: 99,
+                      style: { textAlign: "center" },
+                    }}
                     type="number"
                     variant="standard"
                     defaultValue={(

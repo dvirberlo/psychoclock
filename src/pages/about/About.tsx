@@ -10,26 +10,38 @@ export default function About() {
     >
       <Stack spacing={2}>
         <Typography variant="h2">About</Typography>
-        <Typography
-          sx={{
+        <div
+          style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            flexDirection: "column",
           }}
         >
-          This web app was build in one day using React, TypeScript, and MUI.
-          <br />
-          It's a simple clock app for those who want to simulate a psychometric
-          test.
-          <br />
-        </Typography>
-        <Button
-          onClick={() =>
-            (document.location.href = "https://github.com/dvirberlo")
-          }
-        >
-          Made by @dvirberlo
-        </Button>
+          <Typography
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            This web app was build in one day using React, TypeScript, and MUI.
+            <br />
+            It's a simple clock app for those who want to simulate a
+            psychometric test.
+            <br />
+          </Typography>
+          <Button
+            sx={{
+              maxWidth: 200,
+            }}
+            onClick={() =>
+              (document.location.href = "https://github.com/dvirberlo")
+            }
+          >
+            Made by @dvirberlo
+          </Button>
+        </div>
       </Stack>
     </Container>
   );
