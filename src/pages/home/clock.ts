@@ -10,21 +10,7 @@ export type ClockCB = {
   percent: number;
 };
 
-export type ClockSettings = {
-  withEssay: boolean;
-  essaySeconds: number;
-
-  chaptersCount: number;
-  chapterSeconds: number;
-
-  notifyEnds: boolean;
-  notifyMinutesLeft: boolean;
-  secondsLeftCount: number;
-
-  resetVisualClockEssay: boolean;
-  resetVisualClockChapter: boolean;
-};
-export const DEFAULT_SETTINGS: ClockSettings = {
+export const DEFAULT_SETTINGS = {
   withEssay: true,
   essaySeconds: 30 * 60,
 
@@ -37,8 +23,10 @@ export const DEFAULT_SETTINGS: ClockSettings = {
 
   resetVisualClockEssay: true,
   resetVisualClockChapter: true,
+  totalPercent: false,
 };
 Object.freeze(DEFAULT_SETTINGS);
+export type ClockSettings = typeof DEFAULT_SETTINGS;
 
 const CLOCK_INTERVAL = 500;
 export class Clock {
@@ -63,7 +51,8 @@ export class Clock {
     this.settings = structuredClone(DEFAULT_SETTINGS);
   }
 
-  public setSettings(settings: ClockSettings) {
+  // TODO: what type is this settings field should be?
+  public setSettings(settings: any) {
     Object.assign(this.settings, settings);
   }
 
@@ -71,14 +60,19 @@ export class Clock {
     const computedTotalSeconds =
       (this.settings.withEssay ? this.settings.essaySeconds : 0) +
       this.settings.chapterSeconds * this.settings.chaptersCount;
-    console.log(computedTotalSeconds, this.state.totalSeconds, this.settings);
     this.clockCB({
       chapterIndex: this.state.chapterIndex,
       inEssay: this.state.inEssay,
       hours: Math.floor(this.state.seconds / 3600),
       minutes: Math.floor(this.state.seconds / 60),
       seconds: Math.floor(this.state.seconds % 60),
-      percent: (this.state.totalSeconds / computedTotalSeconds) * 100,
+      percent: this.settings.totalPercent
+        ? (this.state.totalSeconds / computedTotalSeconds) * 100
+        : (this.state.seconds /
+            (this.state.inEssay
+              ? this.settings.essaySeconds
+              : this.settings.chapterSeconds)) *
+          100,
     });
   }
 

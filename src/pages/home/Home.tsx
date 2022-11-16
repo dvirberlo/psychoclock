@@ -86,15 +86,15 @@ function ClockDisplay(
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        marginBlock: 7,
+        marginBlock: 11,
       }}
     >
       <CircularProgress
         variant="determinate"
         value={percent}
-        size={240}
-        thickness={1}
-        // color="secondary"
+        size={300}
+        thickness={0.8}
+        color="secondary"
         sx={{
           position: "absolute",
           zIndex: -1,
@@ -155,7 +155,10 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
         marginTop: "1rem",
       }}
     >
-      <Accordion>
+      <Accordion
+        disabled={clockMode !== ClockMode.Off}
+        expanded={clockMode === ClockMode.Off}
+      >
         <AccordionSummary expandIcon={<ExpandIcon />}>
           <Typography
             variant="h6"
@@ -167,6 +170,9 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
           >
             <SettingsIcon />
             Settings
+            <Typography variant="body1" sx={{ marginLeft: 2 }}>
+              {clockMode !== ClockMode.Off ? "reset clock to enable" : ""}
+            </Typography>
           </Typography>
         </AccordionSummary>
         <AccordionDetails sx={{ paddingInline: ".5rem" }}>
@@ -191,7 +197,9 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                   <Switch
                     checked={clock.settings.withEssay}
                     onClick={(event) => {
-                      clock.settings.withEssay = !clock.settings.withEssay;
+                      clock.setSettings({
+                        withEssay: !clock.settings.withEssay,
+                      });
                       stateUpdated(counter + 1);
                     }}
                   />
@@ -209,8 +217,9 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                 variant="standard"
                 defaultValue={(clock.settings.essaySeconds / 60).toString()}
                 onChange={(event) => {
-                  clock.settings.essaySeconds =
-                    parseFloat(event.target.value) * 60;
+                  clock.setSettings({
+                    essaySeconds: parseFloat(event.target.value) * 60,
+                  });
                   stateUpdated(counter + 1);
                 }}
               />
@@ -245,8 +254,9 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                 variant="standard"
                 defaultValue={(clock.settings.chapterSeconds / 60).toString()}
                 onChange={(event) => {
-                  clock.settings.chapterSeconds =
-                    parseFloat(event.target.value) * 60;
+                  clock.setSettings({
+                    chapterSeconds: parseFloat(event.target.value) * 60,
+                  });
                   stateUpdated(counter + 1);
                 }}
               />
@@ -258,8 +268,9 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                 <Switch
                   checked={clock.settings.notifyMinutesLeft}
                   onClick={(event) => {
-                    clock.settings.notifyMinutesLeft =
-                      !clock.settings.notifyMinutesLeft;
+                    clock.setSettings({
+                      notifyMinutesLeft: !clock.settings.notifyMinutesLeft,
+                    });
                     stateUpdated(counter + 1);
                   }}
                 />
@@ -282,8 +293,9 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                       clock.settings.secondsLeftCount / 60
                     ).toString()}
                     onChange={(event) => {
-                      clock.settings.secondsLeftCount =
-                        parseFloat(event.target.value) * 60;
+                      clock.setSettings({
+                        secondsLeftCount: parseFloat(event.target.value) * 60,
+                      });
                       stateUpdated(counter + 1);
                     }}
                   />
@@ -297,7 +309,9 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                 <Switch
                   checked={clock.settings.notifyEnds}
                   onClick={(event) => {
-                    clock.settings.notifyEnds = !clock.settings.notifyEnds;
+                    clock.setSettings({
+                      notifyEnds: !clock.settings.notifyEnds,
+                    });
                     stateUpdated(counter + 1);
                   }}
                 />
@@ -311,8 +325,10 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                 <Switch
                   checked={clock.settings.resetVisualClockEssay}
                   onClick={(event) => {
-                    clock.settings.resetVisualClockEssay =
-                      !clock.settings.resetVisualClockEssay;
+                    clock.setSettings({
+                      resetVisualClockEssay:
+                        !clock.settings.resetVisualClockEssay,
+                    });
                     stateUpdated(counter + 1);
                   }}
                 />
@@ -325,8 +341,10 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                 <Switch
                   checked={clock.settings.resetVisualClockChapter}
                   onClick={(event) => {
-                    clock.settings.resetVisualClockChapter =
-                      !clock.settings.resetVisualClockChapter;
+                    clock.setSettings({
+                      resetVisualClockChapter:
+                        !clock.settings.resetVisualClockChapter,
+                    });
                     stateUpdated(counter + 1);
                   }}
                 />
