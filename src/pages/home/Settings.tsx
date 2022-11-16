@@ -23,17 +23,20 @@ export function SettingsToggle({
   field,
   updateState,
   label,
+  disabled = false,
 }: {
   clockMode: ClockMode;
   clock: Clock;
   field: keyof Clock["settings"];
   updateState: () => void;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <FormControlLabel
       control={
         <Switch
+          disabled={disabled}
           checked={clock.settings[field] as boolean}
           onClick={(event) => {
             clock.setSettings({
@@ -271,6 +274,7 @@ export function DisplaySettingsSection({
               label="Reset clock when easay ends"
             />
             <SettingsToggle
+              disabled={!clock.settings.resetVisualClockEssay}
               clockMode={clockMode}
               clock={clock}
               field="resetVisualClockChapter"

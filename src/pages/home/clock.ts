@@ -53,6 +53,10 @@ export class Clock {
 
   public setSettings(settings: Partial<ClockSettings>) {
     Object.assign(this.settings, settings);
+    if (settings.resetVisualClockEssay === false)
+      this.settings.resetVisualClockChapter = false;
+    if (settings.resetVisualClockEssay === true)
+      this.settings.resetVisualClockChapter = true;
   }
 
   private formatStateCB() {
@@ -66,12 +70,23 @@ export class Clock {
             ? this.settings.essaySeconds
             : this.settings.chapterSeconds)) *
         100;
+
+    const selectedSeconds =
+      (this.settings.resetVisualClockEssay || !this.settings.withEssay
+        ? 0
+        : this.state.inEssay
+        ? 0
+        : this.settings.essaySeconds) +
+      (this.settings.resetVisualClockChapter
+        ? 0
+        : this.state.chapterIndex * this.settings.chapterSeconds) +
+      this.state.seconds;
     this.clockCB({
       chapterIndex: this.state.chapterIndex,
       inEssay: this.state.inEssay,
-      hours: Math.floor(this.state.seconds / 3600),
-      minutes: Math.floor(this.state.seconds / 60),
-      seconds: Math.floor(this.state.seconds % 60),
+      hours: Math.floor(selectedSeconds / 3600),
+      minutes: Math.floor(selectedSeconds / 60),
+      seconds: Math.floor(selectedSeconds % 60),
       percent: percent > 100 ? 100 : percent,
     });
   }
