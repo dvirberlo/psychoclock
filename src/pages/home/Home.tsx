@@ -188,7 +188,6 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                   clock.settings.essaySeconds =
                     parseFloat(event.target.value) * 60;
                   stateUpdated(counter + 1);
-                  console.log(clock.settings.essaySeconds);
                 }}
               />
               <Typography>minutes long</Typography>
@@ -211,7 +210,6 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                 onChange={(event) => {
                   clock.settings.chaptersCount = parseFloat(event.target.value);
                   stateUpdated(counter + 1);
-                  console.log(clock.settings.chaptersCount);
                 }}
               />
               <Typography> chapters.</Typography>
@@ -226,7 +224,6 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                   clock.settings.chapterSeconds =
                     parseFloat(event.target.value) * 60;
                   stateUpdated(counter + 1);
-                  console.log(clock.settings.chapterSeconds);
                 }}
               />
               <Typography>minutes long</Typography>
@@ -264,7 +261,6 @@ function SettingsDisplay(clockMode: ClockMode, clock: Clock) {
                       clock.settings.secondsLeftCount =
                         parseFloat(event.target.value) * 60;
                       stateUpdated(counter + 1);
-                      console.log(clock.settings.secondsLeftCount);
                     }}
                   />
                   minutes
