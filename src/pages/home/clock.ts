@@ -71,16 +71,18 @@ export class Clock {
             : this.settings.chapterSeconds)) *
         100;
 
-    const selectedSeconds =
-      (this.settings.resetVisualClockEssay || !this.settings.withEssay
-        ? 0
-        : this.state.inEssay
-        ? 0
-        : this.settings.essaySeconds) +
-      (this.settings.resetVisualClockChapter
-        ? 0
-        : (this.state.chapterIndex - 1) * this.settings.chapterSeconds) +
-      this.state.seconds;
+    let selectedSeconds = this.state.seconds;
+    if (
+      !this.settings.resetVisualClockEssay &&
+      this.settings.withEssay &&
+      !this.state.inEssay
+    )
+      selectedSeconds += this.settings.essaySeconds;
+    if (!this.settings.resetVisualClockChapter && !this.state.inEssay)
+      selectedSeconds +=
+        this.settings.chapterSeconds *
+        (this.state.chapterIndex - (this.settings.withEssay ? 1 : 0));
+
     this.clockCB({
       chapterIndex: this.state.chapterIndex,
       inEssay: this.state.inEssay,
