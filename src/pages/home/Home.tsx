@@ -7,7 +7,7 @@ import {
 import { Button, CircularProgress, Container, Typography } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useState } from "react";
-import { Clock, ClockCB } from "./clock";
+import { Clock, ClockCB } from "../../services/clock";
 import { DisplaySettingsSection, SettingsSection } from "./Settings";
 
 export enum ClockMode {

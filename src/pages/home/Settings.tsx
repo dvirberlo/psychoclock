@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useState } from "react";
-import { Clock } from "./clock";
+import { Clock } from "../../services/clock";
 import { ClockMode } from "./Home";
 
 export function SettingsToggle({
