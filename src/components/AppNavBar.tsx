@@ -28,7 +28,7 @@ export default function AppNavBar({ pages }: { pages: Page[] }) {
         <Typography
           variant="body1"
           component="div"
-          sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
+          sx={{ flexGrow: 1, display: { sm: "none", md: "block" } }}
         >
           <script
             async
