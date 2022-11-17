@@ -20,7 +20,7 @@ export default function AppNavBar({ pages }: { pages: Page[] }) {
           }}
         >
           <img
-            src="/icons/app-white.svg"
+            src="/icons/app-color.svg"
             style={{ width: "1.5rem", marginRight: 4 }}
           />
           Psycho Clock
