@@ -8,6 +8,7 @@ import { Button, CircularProgress, Container, Typography } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useState } from "react";
 import { Clock, ClockCB } from "../../services/clock";
+import { ClockShortcuts, setupShortcuts } from "../../services/clock-shortcuts";
 import { DisplaySettingsSection, SettingsSection } from "./Settings";
 
 export enum ClockMode {
@@ -98,10 +99,24 @@ function ClockDisplay(
     clock.continueClock();
     setClockMode(ClockMode.On);
   };
+  const getAction = () => {
+    switch (clockMode) {
+      case ClockMode.Off:
+        return startClick;
+      case ClockMode.On:
+        return stopClick;
+      case ClockMode.Paused:
+        return continueClick;
+    }
+  };
   const resetClick = () => {
     clock.resetClock();
     setClockMode(ClockMode.Off);
   };
+  const questionClick = () => {
+    // TODO: Implement
+  };
+
   return (
     <Stack
       sx={{
@@ -111,6 +126,7 @@ function ClockDisplay(
         marginBlock: 13,
       }}
     >
+      {setupShortcuts(getAction(), resetClick, questionClick)}
       <CircularProgress
         variant="determinate"
         value={percent}
@@ -143,13 +159,7 @@ function ClockDisplay(
               [ClockMode.Paused]: <ContinueIcon />,
             }[clockMode]
           }
-          onClick={
-            {
-              [ClockMode.Off]: startClick,
-              [ClockMode.On]: stopClick,
-              [ClockMode.Paused]: continueClick,
-            }[clockMode]
-          }
+          onClick={getAction()}
         >
           {
             {
@@ -159,10 +169,25 @@ function ClockDisplay(
             }[clockMode]
           }
         </Button>
-        <Button size="large" startIcon={<ResetIcon />} onClick={resetClick}>
+        <Button
+          color="warning"
+          size="large"
+          startIcon={<ResetIcon />}
+          onClick={resetClick}
+        >
           Reset
         </Button>
       </Stack>
+      <Typography
+        variant="caption"
+        sx={{
+          display:
+            (navigator as any).userAgentData.mobile !== true ? "block" : "none",
+          marginTop: 2,
+        }}
+      >
+        Hit <b>?</b> to see shortcuts
+      </Typography>
     </Stack>
   );
 }
