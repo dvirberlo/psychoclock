@@ -21,14 +21,14 @@ export function SettingsToggle({
   clockMode,
   clock,
   field,
-  updateState,
+  updateState = () => {},
   label,
   disabled = false,
 }: {
   clockMode: ClockMode;
   clock: Clock;
   field: keyof Clock["settings"];
-  updateState: () => void;
+  updateState?: () => void;
   label: string;
   disabled?: boolean;
 }) {
@@ -59,7 +59,6 @@ export function SettingsSection({
   clockMode: ClockMode;
   clock: Clock;
 }) {
-  const [counter, stateUpdated] = useState(0);
   return (
     <div
       style={{
@@ -110,7 +109,6 @@ export function SettingsSection({
                 clockMode={clockMode}
                 clock={clock}
                 field="withEssay"
-                updateState={() => stateUpdated(counter + 1)}
                 label="Essay at start"
               />
               <TextField
@@ -126,7 +124,6 @@ export function SettingsSection({
                   clock.setSettings({
                     essaySeconds: parseFloat(event.target.value) * 60,
                   });
-                  stateUpdated(counter + 1);
                 }}
               />
               <Typography>minutes long</Typography>
@@ -150,7 +147,6 @@ export function SettingsSection({
                   clock.setSettings({
                     chaptersCount: parseFloat(event.target.value),
                   });
-                  stateUpdated(counter + 1);
                 }}
               />
               <Typography> chapters.</Typography>
@@ -165,7 +161,6 @@ export function SettingsSection({
                   clock.setSettings({
                     chapterSeconds: parseFloat(event.target.value) * 60,
                   });
-                  stateUpdated(counter + 1);
                 }}
               />
               <Typography>minutes long</Typography>
@@ -179,7 +174,6 @@ export function SettingsSection({
                     clock.setSettings({
                       notifyMinutesLeft: !clock.settings.notifyMinutesLeft,
                     });
-                    stateUpdated(counter + 1);
                   }}
                 />
               }
@@ -204,7 +198,6 @@ export function SettingsSection({
                       clock.setSettings({
                         secondsLeftCount: parseFloat(event.target.value) * 60,
                       });
-                      stateUpdated(counter + 1);
                     }}
                   />
                   minutes
@@ -226,7 +219,6 @@ export function DisplaySettingsSection({
   clockMode: ClockMode;
   clock: Clock;
 }) {
-  const [counter, stateUpdated] = useState(0);
   return (
     <div
       style={{
@@ -263,14 +255,12 @@ export function DisplaySettingsSection({
               clockMode={clockMode}
               clock={clock}
               field="notifyEnds"
-              updateState={() => stateUpdated(counter + 1)}
               label="Notify when chapter or essay ends"
             />
             <SettingsToggle
               clockMode={clockMode}
               clock={clock}
               field="resetVisualClockEssay"
-              updateState={() => stateUpdated(counter + 1)}
               label="Reset clock when easay ends"
             />
             <SettingsToggle
@@ -278,14 +268,12 @@ export function DisplaySettingsSection({
               clockMode={clockMode}
               clock={clock}
               field="resetVisualClockChapter"
-              updateState={() => stateUpdated(counter + 1)}
               label="Reset clock when chapter ends"
             />
             <SettingsToggle
               clockMode={clockMode}
               clock={clock}
               field="totalPercent"
-              updateState={() => stateUpdated(counter + 1)}
               label="Circular progress bar shows total percent"
             />
           </Stack>

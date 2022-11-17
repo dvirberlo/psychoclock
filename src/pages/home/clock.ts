@@ -10,6 +10,7 @@ export type ClockCB = {
   percent: number;
 };
 
+const SETTINGS_VERSION = 1;
 export const DEFAULT_SETTINGS = {
   withEssay: true,
   essaySeconds: 30 * 60,
@@ -45,10 +46,16 @@ export class Clock {
 
   constructor(
     public clockCB: (data: ClockCB) => void = () => {},
-    public finishedCB: () => void = () => {}
+    public finishedCB: () => void = () => {},
+    public settingsCB: () => void = () => {}
   ) {
     this.notfier = new VoiceNotifier();
     this.settings = structuredClone(DEFAULT_SETTINGS);
+    (async () => {
+      const storage = localStorage.getItem("settingsV" + SETTINGS_VERSION);
+      if (storage != null)
+        this.setSettings(JSON.parse(storage) as Partial<ClockSettings>);
+    })();
   }
 
   public setSettings(settings: Partial<ClockSettings>) {
@@ -57,6 +64,13 @@ export class Clock {
       this.settings.resetVisualClockChapter = false;
     if (settings.resetVisualClockEssay === true)
       this.settings.resetVisualClockChapter = true;
+    this.settingsCB();
+    (async () => {
+      localStorage.setItem(
+        "settingsV" + SETTINGS_VERSION,
+        JSON.stringify(this.settings)
+      );
+    })();
   }
 
   private formatStateCB() {

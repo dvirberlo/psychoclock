@@ -55,6 +55,9 @@ function ClockDisplay(
     if (percent !== state.percent) setPercent(state.percent);
   };
 
+  const [settingsCounter, settingsUpdated] = useState(0);
+  clock.settingsCB = () => settingsUpdated(settingsCounter + 1);
+
   const startClick = () => {
     clock.startClock();
     setClockMode(ClockMode.On);
