@@ -5,15 +5,11 @@ import { useState } from "react";
 export const ClockShortcuts = {
   toggle: { key: "E", details: "Toggle Clock On/Off" },
   reset: { key: "R", details: "Reset Clock" },
-  question: { key: "Q", details: "Move to next question" },
+  // question: { key: "Q", details: "Move to next question" },
   showShortcuts: { key: "?", details: "Show Shortcuts" },
 };
 
-export function setupShortcuts(
-  toggle: () => void,
-  reset: () => void,
-  question: () => void
-) {
+export function setupShortcuts(toggle: () => void, reset: () => void) {
   const [dialogOpen, setDialogOpen] = useState(false);
   document.onkeydown = (e) => {
     let captured = true;
@@ -23,9 +19,6 @@ export function setupShortcuts(
         break;
       case ClockShortcuts.reset.key:
         reset();
-        break;
-      case ClockShortcuts.question.key:
-        question();
         break;
       case ClockShortcuts.showShortcuts.key:
         setDialogOpen(true);
@@ -37,7 +30,13 @@ export function setupShortcuts(
   };
   return (
     <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-      <DialogTitle>Shortcuts</DialogTitle>
+      <Typography
+        color="primary"
+        variant="h5"
+        sx={{ paddingBlock: 2, paddingInline: 10 }}
+      >
+        Shortcuts
+      </Typography>
       <Stack spacing={2} sx={{ padding: 2 }}>
         {Object.entries(ClockShortcuts).map(([key, value]) => (
           <Typography key={key}>

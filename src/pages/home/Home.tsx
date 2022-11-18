@@ -113,9 +113,6 @@ function ClockDisplay(
     clock.resetClock();
     setClockMode(ClockMode.Off);
   };
-  const questionClick = () => {
-    // TODO: Implement
-  };
 
   return (
     <Stack
@@ -126,7 +123,7 @@ function ClockDisplay(
         marginBlock: 13,
       }}
     >
-      {setupShortcuts(getAction(), resetClick, questionClick)}
+      {setupShortcuts(getAction(), resetClick)}
       <CircularProgress
         variant="determinate"
         value={percent}
