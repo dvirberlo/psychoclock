@@ -64,14 +64,18 @@ export class Clock {
       this.settings.resetVisualClockChapter = false;
     if (settings.resetVisualClockEssay === true)
       this.settings.resetVisualClockChapter = true;
-    if (
-      (settings.chapterSeconds != null &&
-        this.settings.secondsLeftCount > settings.chapterSeconds) ||
-      (settings.essaySeconds != null &&
-        this.settings.secondsLeftCount > settings.essaySeconds)
-    )
-      this.settings.notifyMinutesLeft = false;
-    else this.settings.notifyMinutesLeft = true;
+    if (settings.chapterSeconds != null || settings.essaySeconds != null) {
+      if (
+        (settings.chapterSeconds != null &&
+          this.settings.chaptersCount > 0 &&
+          this.settings.secondsLeftCount > settings.chapterSeconds) ||
+        (settings.essaySeconds != null &&
+          this.settings.withEssay &&
+          this.settings.secondsLeftCount > settings.essaySeconds)
+      )
+        this.settings.notifyMinutesLeft = false;
+      else this.settings.notifyMinutesLeft = true;
+    }
     this.settingsCB();
     (async () => {
       localStorage.setItem(
