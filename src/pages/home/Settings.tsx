@@ -7,13 +7,14 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Container,
   FormControlLabel,
   Switch,
+  SxProps,
   TextField,
   Typography,
 } from "@mui/material";
 import { Stack } from "@mui/system";
-import { useState } from "react";
 import { Clock } from "../../services/clock";
 import { ClockMode } from "./Home";
 
@@ -52,6 +53,19 @@ export function SettingsToggle({
   );
 }
 
+const centeredSX: SxProps = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+const SettingsSX: SxProps = {
+  ...centeredSX,
+  marginBottom: ".5rem",
+  maxWidth: { xs: "30rem%", sm: "35rem", md: "45rem" },
+  width: "100%",
+  padding: "0",
+};
+
 export function SettingsSection({
   clockMode,
   clock,
@@ -60,27 +74,14 @@ export function SettingsSection({
   clock: Clock;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: "1rem",
-      }}
-    >
+    <Container sx={SettingsSX} maxWidth={false}>
       <Accordion
+        style={{ width: "100%" }}
         disabled={clockMode !== ClockMode.Off}
         expanded={clockMode === ClockMode.Off}
       >
         <AccordionSummary>
-          <Typography
-            variant="h6"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <Typography variant="h6" sx={centeredSX}>
             <SettingsIcon style={{ marginRight: 6 }} />
             Settings
             <Typography variant="body1" sx={{ marginLeft: 2 }}>
@@ -89,22 +90,8 @@ export function SettingsSection({
           </Typography>
         </AccordionSummary>
         <AccordionDetails sx={{ paddingInline: ".5rem" }}>
-          <Stack
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            spacing={1.5}
-          >
-            <Stack
-              direction="row"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+          <Stack sx={centeredSX} spacing={1.5}>
+            <Stack direction="row" sx={centeredSX}>
               <SettingsToggle
                 clockMode={clockMode}
                 clock={clock}
@@ -129,15 +116,7 @@ export function SettingsSection({
               <Typography>minutes long</Typography>
             </Stack>
 
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+            <Stack direction="row" spacing={2} sx={centeredSX}>
               <TextField
                 inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
                 type="number"
@@ -208,7 +187,7 @@ export function SettingsSection({
           </Stack>
         </AccordionDetails>
       </Accordion>
-    </div>
+    </Container>
   );
 }
 
@@ -220,15 +199,8 @@ export function DisplaySettingsSection({
   clock: Clock;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: "1rem",
-      }}
-    >
-      <Accordion>
+    <Container sx={SettingsSX} maxWidth={false}>
+      <Accordion style={{ width: "100%" }}>
         <AccordionSummary expandIcon={<ExpandIcon />}>
           <Typography
             variant="h6"
@@ -243,14 +215,7 @@ export function DisplaySettingsSection({
           </Typography>
         </AccordionSummary>
         <AccordionDetails sx={{ paddingInline: ".5rem" }}>
-          <Stack
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            spacing={1.5}
-          >
+          <Stack sx={centeredSX} spacing={1.5}>
             <SettingsToggle
               clockMode={clockMode}
               clock={clock}
@@ -279,6 +244,6 @@ export function DisplaySettingsSection({
           </Stack>
         </AccordionDetails>
       </Accordion>
-    </div>
+    </Container>
   );
 }
