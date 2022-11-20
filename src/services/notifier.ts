@@ -8,34 +8,48 @@ export type Notifier = {
 };
 
 export class VoiceNotifier implements Notifier {
-  private voice: SpeechSynthesisUtterance;
+  private voice?: SpeechSynthesisUtterance;
   constructor() {
-    this.voice = new SpeechSynthesisUtterance();
-    this.voice.lang = "en-US";
-    this.voice.rate = 1.3;
-    this.voice.volume = 1;
+    try {
+      if (!window.speechSynthesis)
+        throw new Error("Speech synthesis not supported.");
+      this.voice = new SpeechSynthesisUtterance();
+      this.voice.lang = "en-US";
+      this.voice.rate = 1.3;
+      this.voice.volume = 1;
+    } catch (e) {
+      this.notSupported(e);
+    }
+  }
+  private notSupported(e: unknown) {
+    console.error(e);
+    window.alert(
+      "Your browser does not support speech synthesis. \nPlease, do the yourself a favor and use a modern browser."
+    );
   }
   private speak(text: string) {
+    if (this.voice === undefined) return;
     this.cancel();
     this.voice.text = text;
     window.speechSynthesis.speak(this.voice);
   }
   public cancel() {
+    if (this.voice === undefined) return;
     window.speechSynthesis.cancel();
   }
   public start() {
-    this.speak("You can start now. Good luck!");
+    this.speak("Start now.");
   }
   public continue() {
-    this.speak("You can continue now. Good luck!");
+    this.speak("Continue now.");
   }
   public minutesLeft(count = 5) {
-    this.speak(count + " minutes left");
+    this.speak(count + " minutes left.");
   }
   public nextChapter() {
-    this.speak("Chapter finished. Continue to the next chapter.");
+    this.speak("Chapter finished, continue to the next one.");
   }
   public end() {
-    this.speak("Time's up. Good job!");
+    this.speak("Pencils down. Time's up.");
   }
 }
