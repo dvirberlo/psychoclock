@@ -11,7 +11,7 @@ export type ClockViewState = {
   mode: ClockMode;
 };
 
-const SETTINGS_VERSION = 1 as const;
+const SETTINGS_VERSION = 2 as const;
 const SETTINGS_STORAGE_KEY = `settingsV${SETTINGS_VERSION}` as const;
 let _DEFAULT_SETTINGS = {
   withEssay: true,
@@ -26,7 +26,7 @@ let _DEFAULT_SETTINGS = {
 
   resetVisualClockEssay: true,
   resetVisualClockChapter: true,
-  totalPercent: false,
+  chapterPercent: true,
 };
 export type ClockSettings = typeof _DEFAULT_SETTINGS;
 export const DEFAULT_SETTINGS = { ..._DEFAULT_SETTINGS } as const;
@@ -171,14 +171,14 @@ export class Clock {
     const computedTotalSeconds =
       (this.settings.withEssay ? this.settings.essaySeconds : 0) +
       this.settings.chapterSeconds * this.settings.chaptersCount;
-    const percent = this.settings.totalPercent
-      ? (activeTime / 1000 / computedTotalSeconds) * 100
-      : (chapterTime /
+    const percent = this.settings.chapterPercent
+      ? (chapterTime /
           1000 /
           (inEssay
             ? this.settings.essaySeconds
             : this.settings.chapterSeconds)) *
-        100;
+        100
+      : (activeTime / 1000 / computedTotalSeconds) * 100;
 
     let chapterCounter = chapterIndex - (this.settings.withEssay ? 1 : 0);
     let chapterSeconds = Math.floor(chapterTime / 1000);

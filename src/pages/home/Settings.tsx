@@ -27,14 +27,18 @@ const centeredSX: SxProps = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-};
+} as const;
 const SettingsSX: SxProps = {
   ...centeredSX,
   marginBottom: ".5rem",
-  maxWidth: { xs: "30rem%", sm: "35rem", md: "45rem" },
-  width: "100%",
+  maxWidth: "98vw",
+  width: { xs: "30rem", sm: "35rem", md: "45rem" },
   padding: "0",
-};
+} as const;
+const AccordionDetailsSX: SxProps = {
+  paddingInline: ".5rem",
+} as const;
+const SettingsSpacing = { xs: 1, sm: 2, md: 2.5 } as const;
 const SettingsTypographyVariant = "body2" as const;
 
 function SettingsToggle({
@@ -56,6 +60,8 @@ function SettingsToggle({
     <FormControlLabel
       control={
         <Switch
+          sx={{ padding: 0.5 }}
+          size="small"
           disabled={disabled}
           checked={settings[field] as boolean}
           onClick={(event) => {
@@ -143,39 +149,41 @@ function DisplaySettingsSection({
             Display Settings
           </Typography>
         </AccordionSummary>
-        <AccordionDetails sx={{ paddingInline: ".5rem" }}>
-          <Stack sx={centeredSX} spacing={1.5}>
-            <SettingsToggle
-              field="notifyEnds"
-              label="Notify when chapter or essay ends"
-              settings={clock.settings}
-              setSettings={_setSettings}
-            />
-            <SettingsToggle
-              field="resetVisualClockEssay"
-              label="Reset clock when easay ends"
-              settings={clock.settings}
-              setSettings={(newSettings) => {
-                _setSettings({
-                  ...newSettings,
-                  resetVisualClockChapter:
-                    !clock.settings.resetVisualClockEssay,
-                });
-              }}
-            />
-            <SettingsToggle
-              disabled={!clock.settings.resetVisualClockEssay}
-              field="resetVisualClockChapter"
-              label="Reset clock when chapter ends"
-              settings={clock.settings}
-              setSettings={_setSettings}
-            />
-            <SettingsToggle
-              field="totalPercent"
-              label="Circular progress bar shows total percent"
-              settings={clock.settings}
-              setSettings={_setSettings}
-            />
+        <AccordionDetails sx={AccordionDetailsSX}>
+          <Stack sx={centeredSX} spacing={SettingsSpacing} direction="column">
+            <Stack sx={centeredSX} spacing={1.5}>
+              <SettingsToggle
+                field="notifyEnds"
+                label="Notify when chapter or essay ends"
+                settings={clock.settings}
+                setSettings={_setSettings}
+              />
+              <SettingsToggle
+                field="resetVisualClockEssay"
+                label="Reset clock when easay ends"
+                settings={clock.settings}
+                setSettings={(newSettings) => {
+                  _setSettings({
+                    ...newSettings,
+                    resetVisualClockChapter:
+                      !clock.settings.resetVisualClockEssay,
+                  });
+                }}
+              />
+              <SettingsToggle
+                disabled={!clock.settings.resetVisualClockEssay}
+                field="resetVisualClockChapter"
+                label="Reset clock when chapter ends"
+                settings={clock.settings}
+                setSettings={_setSettings}
+              />
+              <SettingsToggle
+                field="chapterPercent"
+                label="Circular bar shows only chapter progress"
+                settings={clock.settings}
+                setSettings={_setSettings}
+              />
+            </Stack>
           </Stack>
         </AccordionDetails>
       </Accordion>
@@ -218,8 +226,8 @@ function SettingsSection({
             </Typography>
           </Typography>
         </AccordionSummary>
-        <AccordionDetails sx={{ paddingInline: ".5rem" }}>
-          <Stack sx={centeredSX} spacing={1.5}>
+        <AccordionDetails sx={AccordionDetailsSX}>
+          <Stack sx={centeredSX} spacing={SettingsSpacing} direction="column">
             <Stack direction="row" sx={centeredSX}>
               <SettingsToggle
                 field="withEssay"
@@ -227,6 +235,9 @@ function SettingsSection({
                 settings={clock.settings}
                 setSettings={_setSettings}
               />
+            </Stack>
+            <Stack direction="row" sx={centeredSX}>
+              <Typography variant={SettingsTypographyVariant}>Essay</Typography>
               <SettingsNumberInput
                 sx={{ marginInline: ".5rem" }}
                 disabled={!clock.settings.withEssay}
@@ -239,7 +250,6 @@ function SettingsSection({
                 minutes long
               </Typography>
             </Stack>
-
             <Stack direction="row" spacing={2} sx={centeredSX}>
               <SettingsNumberInput
                 field="chaptersCount"
@@ -249,10 +259,15 @@ function SettingsSection({
                 stateCounter={stateCounter}
               />
               <Typography variant={SettingsTypographyVariant}>
-                chapters.
+                chapters
               </Typography>
-              <Typography variant={SettingsTypographyVariant}>each</Typography>
+            </Stack>
+            <Stack direction="row" sx={centeredSX}>
+              <Typography variant={SettingsTypographyVariant}>
+                Each chapter
+              </Typography>
               <SettingsNumberInput
+                sx={{ marginInline: ".5rem" }}
                 disabled={clock.settings.chaptersCount < 1}
                 field="chapterSeconds"
                 settings={clock.settings}
@@ -264,39 +279,32 @@ function SettingsSection({
                 minutes long
               </Typography>
             </Stack>
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={clock.settings.notifyMinutesLeft}
-                  onClick={(event) => {
-                    _setSettings({
-                      notifyMinutesLeft: !clock.settings.notifyMinutesLeft,
-                    });
-                  }}
-                />
-              }
-              label={
-                <Stack direction="row" alignItems="center">
-                  <Typography variant={SettingsTypographyVariant}>
-                    Notify when chapter or essay ends in
-                  </Typography>
-                  <SettingsNumberInput
-                    sx={{ marginInline: "0.5em" }}
-                    disabled={!clock.settings.notifyMinutesLeft}
-                    field="secondsLeftCount"
-                    settings={clock.settings}
-                    setSettings={_setSettings}
-                    stateCounter={stateCounter}
-                    devider={60}
-                  />
-                  <Typography variant={SettingsTypographyVariant}>
-                    minutes
-                  </Typography>
-                </Stack>
-              }
-              labelPlacement="end"
-            />
+            <Stack direction="row" sx={centeredSX}>
+              <SettingsToggle
+                field="notifyMinutesLeft"
+                label="Notify when a chapter nears its end"
+                stateCounter={stateCounter}
+                settings={clock.settings}
+                setSettings={_setSettings}
+              />
+            </Stack>
+            <Stack direction="row" sx={centeredSX}>
+              <Typography variant={SettingsTypographyVariant}>
+                Notify
+              </Typography>
+              <SettingsNumberInput
+                sx={{ marginInline: "0.5em" }}
+                disabled={!clock.settings.notifyMinutesLeft}
+                field="secondsLeftCount"
+                settings={clock.settings}
+                setSettings={_setSettings}
+                stateCounter={stateCounter}
+                devider={60}
+              />
+              <Typography variant={SettingsTypographyVariant}>
+                minutes before chapter ends
+              </Typography>
+            </Stack>
           </Stack>
         </AccordionDetails>
       </Accordion>

@@ -25,6 +25,7 @@ export default function Home() {
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "column",
+        paddingInline: ".3rem",
       }}
     >
       {ClockDisplay(clock, clockMode, setClockMode)}
