@@ -1,17 +1,19 @@
 import { Notifier, VoiceNotifier } from "./notifier";
 import { ScreenWaker } from "./screen-waker";
 
-export type ClockCB = {
+export type ClockViewState = {
   chapterIndex: number;
   inEssay: boolean;
   hours: number;
   minutes: number;
   seconds: number;
   percent: number;
+  mode: ClockMode;
 };
 
-const SETTINGS_VERSION = 1;
-export const DEFAULT_SETTINGS = {
+const SETTINGS_VERSION = 1 as const;
+const SETTINGS_STORAGE_KEY = `settingsV${SETTINGS_VERSION}` as const;
+let _DEFAULT_SETTINGS = {
   withEssay: true,
   essaySeconds: 30 * 60,
 
@@ -26,192 +28,249 @@ export const DEFAULT_SETTINGS = {
   resetVisualClockChapter: true,
   totalPercent: false,
 };
-Object.freeze(DEFAULT_SETTINGS);
-export type ClockSettings = typeof DEFAULT_SETTINGS;
+export type ClockSettings = typeof _DEFAULT_SETTINGS;
+export const DEFAULT_SETTINGS = { ..._DEFAULT_SETTINGS } as const;
 
-const CLOCK_INTERVAL = 500;
-export class Clock {
-  public readonly settings: ClockSettings;
-  private notfier: Notifier;
-  private waker = new ScreenWaker();
-  public state = {
-    notifiedMinutesLeft: false,
-    chapterIndex: 0,
-    seconds: 0,
-    totalSeconds: 0,
-    inEssay: false,
-    isRunning: false,
-    lastTickTock: -1,
+export namespace PersistentSettings {
+  export let loaded = false;
+  export const load = (): Partial<ClockSettings> => {
+    const storage = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    loaded = true;
+    if (storage != null) return JSON.parse(storage) as Partial<ClockSettings>;
+    return {};
   };
+  export const save = (settings: ClockSettings) => {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  };
+}
 
-  constructor(
-    public clockCB: (data: ClockCB) => void = () => {},
-    public finishedCB: () => void = () => {},
-    public settingsCB: () => void = () => {}
-  ) {
-    this.notfier = new VoiceNotifier();
-    this.settings = structuredClone(DEFAULT_SETTINGS);
-    (async () => {
-      const storage = localStorage.getItem("settingsV" + SETTINGS_VERSION);
-      if (storage != null)
-        this.setSettings(JSON.parse(storage) as Partial<ClockSettings>);
-    })();
+export enum ClockMode {
+  On,
+  Off,
+  Paused,
+  Done,
+}
+export class Clock {
+  static readonly timeSettings: (keyof ClockSettings)[] = [
+    "withEssay",
+    "essaySeconds",
+    "chapterSeconds",
+    "secondsLeftCount",
+    "chaptersCount",
+  ];
+
+  private laststartTime = 0;
+  private activatedTime = 0;
+  private timeouts: NodeJS.Timeout[] = [];
+  private mode: ClockMode = ClockMode.Off;
+
+  private notifier: Notifier = new VoiceNotifier();
+  private waker = new ScreenWaker();
+  constructor(public settings = structuredClone(DEFAULT_SETTINGS)) {}
+
+  public start() {
+    this.reset();
+    this.continue(true);
+    this.notifier.start();
   }
-
+  public continue(muted = false) {
+    this.laststartTime = Date.now();
+    this.defineTimeouts();
+    this.waker.keepScreenOn();
+    if (!muted) this.notifier.continue();
+    this.mode = ClockMode.On;
+  }
+  public stop(muted = false) {
+    this.activatedTime += Date.now() - this.laststartTime;
+    this.timeouts.forEach((timeout) => clearTimeout(timeout));
+    this.timeouts = [];
+    this.waker.releaseScreen();
+    if (!muted) this.notifier.cancel();
+    this.mode = ClockMode.Paused;
+  }
+  public reset() {
+    this.stop();
+    this.activatedTime = 0;
+    this.mode = ClockMode.Off;
+  }
   public setSettings(settings: Partial<ClockSettings>) {
-    Object.assign(this.settings, settings);
-    if (settings.resetVisualClockEssay === false)
-      this.settings.resetVisualClockChapter = false;
-    if (settings.resetVisualClockEssay === true)
-      this.settings.resetVisualClockChapter = true;
-    if (settings.chapterSeconds != null || settings.essaySeconds != null) {
-      if (
-        (settings.chapterSeconds != null &&
-          this.settings.chaptersCount > 0 &&
-          this.settings.secondsLeftCount > settings.chapterSeconds) ||
-        (settings.essaySeconds != null &&
-          this.settings.withEssay &&
-          this.settings.secondsLeftCount > settings.essaySeconds)
-      )
-        this.settings.notifyMinutesLeft = false;
-      else this.settings.notifyMinutesLeft = true;
-    }
-    this.settingsCB();
+    // Note: it tries to work also with a running clock, but it can result in unexpected behavior (like not stop forever)
+    const hasTimeSettings = Clock.timeSettings.some((key) => key in settings);
+    if (hasTimeSettings && this.mode === ClockMode.On) this.stop(true);
+    this.settings = { ...this.settings, ...settings };
+    if (hasTimeSettings && this.mode === ClockMode.On) this.continue(true);
     (async () => {
-      localStorage.setItem(
-        "settingsV" + SETTINGS_VERSION,
-        JSON.stringify(this.settings)
-      );
+      PersistentSettings.save(this.settings);
     })();
   }
 
-  private formatStateCB() {
+  private done() {
+    this.reset();
+    this.notifier.end();
+    this.mode = ClockMode.Done;
+  }
+
+  private defineTimeouts() {
+    let baseTime = -this.activatedTime;
+    if (this.settings.withEssay) {
+      baseTime +=
+        (this.settings.essaySeconds - this.settings.secondsLeftCount) * 1000;
+      if (baseTime > 0) {
+        this.timeouts.push(
+          setTimeout(() => {
+            if (this.settings.notifyMinutesLeft)
+              this.notifier.minutesLeft(this.settings.secondsLeftCount / 60);
+          }, baseTime)
+        );
+      }
+      baseTime += this.settings.secondsLeftCount * 1000;
+      if (baseTime > 0)
+        this.timeouts.push(
+          setTimeout(() => {
+            if (this.settings.notifyEnds) this.notifier.nextChapter();
+          }, baseTime)
+        );
+    }
+    for (let i = 0; i < this.settings.chaptersCount; i++) {
+      baseTime +=
+        (this.settings.chapterSeconds - this.settings.secondsLeftCount) * 1000;
+      if (baseTime > 0)
+        this.timeouts.push(
+          setTimeout(() => {
+            if (this.settings.notifyMinutesLeft)
+              this.notifier.minutesLeft(this.settings.secondsLeftCount / 60);
+          }, baseTime)
+        );
+      baseTime += this.settings.secondsLeftCount * 1000;
+      if (baseTime > 0) {
+        if (i === this.settings.chaptersCount - 1)
+          this.timeouts.push(setTimeout(() => this.done(), baseTime));
+        else
+          this.timeouts.push(
+            setTimeout(() => {
+              if (this.settings.notifyEnds) this.notifier.nextChapter();
+            }, baseTime)
+          );
+      }
+    }
+  }
+
+  public getView(): ClockViewState {
+    if (this.mode === ClockMode.Done || this.mode === ClockMode.Off)
+      return {
+        chapterIndex:
+          this.mode === ClockMode.Done ? this.settings.chaptersCount : 0,
+        inEssay: false,
+        percent: this.mode === ClockMode.Done ? 100 : 0,
+        mode: this.mode,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+      };
+    const { activeTime, chapterTime, chapterIndex, inEssay } = this.calcState();
     const computedTotalSeconds =
       (this.settings.withEssay ? this.settings.essaySeconds : 0) +
       this.settings.chapterSeconds * this.settings.chaptersCount;
     const percent = this.settings.totalPercent
-      ? (this.state.totalSeconds / computedTotalSeconds) * 100
-      : (this.state.seconds /
-          (this.state.inEssay
+      ? (activeTime / 1000 / computedTotalSeconds) * 100
+      : (chapterTime /
+          1000 /
+          (inEssay
             ? this.settings.essaySeconds
             : this.settings.chapterSeconds)) *
         100;
 
-    let selectedSeconds = this.state.seconds;
+    let chapterCounter = chapterIndex - (this.settings.withEssay ? 1 : 0);
+    let chapterSeconds = Math.floor(chapterTime / 1000);
     if (
       !this.settings.resetVisualClockEssay &&
-      this.settings.withEssay &&
-      !this.state.inEssay
+      !inEssay &&
+      this.settings.withEssay
     )
-      selectedSeconds += this.settings.essaySeconds;
-    if (!this.settings.resetVisualClockChapter && !this.state.inEssay)
-      selectedSeconds +=
-        this.settings.chapterSeconds *
-        (this.state.chapterIndex - (this.settings.withEssay ? 1 : 0));
+      chapterSeconds += this.settings.essaySeconds;
+    if (!this.settings.resetVisualClockChapter && !inEssay)
+      chapterSeconds += this.settings.chapterSeconds * chapterCounter;
 
-    this.clockCB({
-      chapterIndex: this.state.chapterIndex,
-      inEssay: this.state.inEssay,
-      hours: Math.floor(selectedSeconds / 3600),
-      minutes: Math.floor(selectedSeconds / 60),
-      seconds: Math.floor(selectedSeconds % 60),
+    return {
+      chapterIndex: chapterCounter + 1,
+      inEssay,
+      hours: Math.floor(chapterSeconds / 3600),
+      minutes: Math.floor(chapterSeconds / 60),
+      seconds: Math.floor(chapterSeconds % 60),
       percent: percent > 100 ? 100 : percent,
-    });
+      mode: this.mode,
+    };
   }
 
-  public resetClock() {
-    this.waker.releaseScreen();
-    this.notfier.cancel();
-    this.state.inEssay = this.settings.withEssay;
-    this.state.chapterIndex = 0;
-    this.state.totalSeconds = 0;
-    this.state.seconds = 0;
-    this.state.isRunning = false;
-    this.state.lastTickTock = -1;
-    this.formatStateCB();
-  }
-
-  public startClock() {
-    this.resetClock();
-    this.notfier.start();
-    this.continueClock(true);
-  }
-
-  public stopClock() {
-    this.waker.releaseScreen();
-    this.notfier.cancel();
-    this.ticktock().then(() => {
-      this.state.isRunning = false;
-      this.state.lastTickTock = -1;
-    });
-  }
-
-  private finished() {
-    this.waker.releaseScreen();
-    if (this.settings.notifyEnds) {
-      this.notfier.end();
-    }
-    this.formatStateCB();
-    this.finishedCB();
-  }
-
-  public continueClock(started = false) {
-    this.waker.keepScreenOn();
-    this.formatStateCB();
-    if (!started) this.notfier.continue();
-
-    // Note: this function uses ClockSettings by reference, so it will be updated automatically, if the settings change.
-    // also, it's a stopwatch, not a timer
-    this.state.lastTickTock = Date.now();
-    this.state.isRunning = true;
-    this.ticktock();
-  }
-
-  private async ticktock() {
-    if (!this.state.isRunning) {
-      // clearInterval(interval);
-      return;
-    }
-    const now = Date.now();
-    const deltaSeconds = (now - this.state.lastTickTock) / 1000;
-    this.state.lastTickTock = now;
-    setTimeout(() => this.ticktock(), CLOCK_INTERVAL);
-    this.state.totalSeconds += deltaSeconds;
-    this.state.seconds += deltaSeconds;
-    if (
-      this.settings.notifyMinutesLeft &&
-      !this.state.notifiedMinutesLeft &&
-      this.settings.secondsLeftCount + this.state.seconds >=
-        (this.state.inEssay
-          ? this.settings.essaySeconds
-          : this.settings.chapterSeconds)
-    ) {
-      this.notfier.minutesLeft(this.settings.secondsLeftCount / 60);
-      this.state.notifiedMinutesLeft = true;
-    }
-    if (
-      this.state.seconds >=
-      (this.state.inEssay
-        ? this.settings.essaySeconds
-        : this.settings.chapterSeconds)
-    ) {
-      const chapterIndex = this.state.chapterIndex + 1;
-      this.state.notifiedMinutesLeft = false;
-      if (this.settings.notifyEnds) this.notfier.nextChapter();
-      if (
-        chapterIndex ===
-        this.settings.chaptersCount + (this.settings.withEssay ? 1 : 0)
-      ) {
-        this.state.isRunning = false;
-        // clearInterval(interval);
-        this.finished();
-        return;
+  private calcState(): {
+    activeTime: number;
+    chapterTime: number;
+    chapterIndex: number;
+    inEssay: boolean;
+  } {
+    const activeTime = Date.now() - this.laststartTime + this.activatedTime;
+    let chapterTime = activeTime;
+    let chapterIndex = 0;
+    if (this.settings.withEssay) {
+      if (activeTime > this.settings.essaySeconds * 1000) {
+        chapterTime -= this.settings.essaySeconds * 1000;
+        chapterTime = chapterTime % (this.settings.chapterSeconds * 1000);
+        chapterIndex =
+          1 +
+          Math.floor(
+            (activeTime - this.settings.essaySeconds * 1000) /
+              (this.settings.chapterSeconds * 1000)
+          );
       }
-      this.state.chapterIndex = chapterIndex;
-      // essay is always first
-      this.state.inEssay = false;
-      this.state.seconds = 0;
+    } else {
+      chapterTime = activeTime % (this.settings.chapterSeconds * 1000);
+      chapterIndex = Math.floor(
+        activeTime / (this.settings.chapterSeconds * 1000)
+      );
     }
-    this.formatStateCB();
+    const inEssay =
+      this.settings.withEssay && activeTime < this.settings.essaySeconds * 1000
+        ? true
+        : false;
+    return {
+      activeTime,
+      chapterTime,
+      chapterIndex,
+      inEssay,
+    };
+  }
+}
+
+export class ViewUpdater {
+  private active = false;
+  constructor(
+    private clockInterval: number,
+    private clock: Clock,
+    public stateCB: (state: ClockViewState) => void = (state) => {}
+  ) {}
+  public activate() {
+    if (this.active) return;
+    this.active = true;
+    this.updateState();
+  }
+  public deactivate() {
+    if (!this.active) return;
+    this.active = false;
+  }
+  public now() {
+    this.updateState(true);
+  }
+  private updateState(now = false) {
+    if (now) this._updateState(now);
+    else requestAnimationFrame(this._updateState.bind(this, now));
+  }
+  private _updateState(now = false) {
+    if (!now && !this.active) return;
+    const newState = this.clock.getView();
+    this.stateCB(newState);
+    if (now) return;
+    if (newState.mode !== ClockMode.Off)
+      setTimeout(this.updateState.bind(this), this.clockInterval);
+    else this.active = false;
   }
 }

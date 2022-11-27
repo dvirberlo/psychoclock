@@ -5,7 +5,16 @@ export type Notifier = {
   minutesLeft: (minutes: number) => void;
   nextChapter: () => void;
   end: () => void;
+  mute: () => void;
+  unmute: () => void;
 };
+
+const DEFAULT_VOICE = {
+  lang: "en-US",
+  rate: 1.3,
+  volume: 1,
+};
+Object.freeze(DEFAULT_VOICE);
 
 export class VoiceNotifier implements Notifier {
   private voice?: SpeechSynthesisUtterance;
@@ -14,9 +23,9 @@ export class VoiceNotifier implements Notifier {
       if (!window.speechSynthesis)
         throw new Error("Speech synthesis not supported.");
       this.voice = new SpeechSynthesisUtterance();
-      this.voice.lang = "en-US";
-      this.voice.rate = 1.3;
-      this.voice.volume = 1;
+      this.voice.lang = DEFAULT_VOICE.lang;
+      this.voice.rate = DEFAULT_VOICE.rate;
+      this.voice.volume = DEFAULT_VOICE.volume;
     } catch (e) {
       this.notSupported(e);
     }
@@ -33,10 +42,20 @@ export class VoiceNotifier implements Notifier {
     this.voice.text = text;
     window.speechSynthesis.speak(this.voice);
   }
+
   public cancel() {
     if (this.voice === undefined) return;
     window.speechSynthesis.cancel();
   }
+  public mute() {
+    if (this.voice === undefined) return;
+    this.voice.volume = 0;
+  }
+  public unmute() {
+    if (this.voice === undefined) return;
+    this.voice.volume = DEFAULT_VOICE.volume;
+  }
+
   public start() {
     this.speak("Start now.");
   }

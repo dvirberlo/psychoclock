@@ -7,23 +7,17 @@ import {
 import { Button, CircularProgress, Container, Typography } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useState } from "react";
-import { Clock, ClockCB } from "../../services/clock";
-import { ClockShortcuts, setupShortcuts } from "../../services/clock-shortcuts";
-import { DisplaySettingsSection, SettingsSection } from "./Settings";
-
-export enum ClockMode {
-  On,
-  Off,
-  Paused,
-}
+import { Clock, ClockMode, ViewUpdater } from "../../services/clock";
+import { setupShortcuts } from "../../services/clock-shortcuts";
+import { SettingsComponent } from "./Settings";
 
 const clock = new Clock();
+const CLOCK_INTERVAL = 500;
+const viewUpdater = new ViewUpdater(CLOCK_INTERVAL, clock);
+let timeout: NodeJS.Timeout | undefined;
 
 export default function Home() {
   const [clockMode, setClockMode] = useState<ClockMode>(ClockMode.Off);
-
-  clock.finishedCB = () => setClockMode(ClockMode.Off);
-
   return (
     <Container
       sx={{
@@ -33,9 +27,8 @@ export default function Home() {
         flexDirection: "column",
       }}
     >
-      {ClockDisplay(clockMode, setClockMode, clock)}
-      <DisplaySettingsSection clock={clock} clockMode={clockMode} />
-      <SettingsSection clock={clock} clockMode={clockMode} />
+      {ClockDisplay(clock, clockMode, setClockMode)}
+      <SettingsComponent clock={clock} clockMode={clockMode} />
       <Typography
         variant="body1"
         component="div"
@@ -62,46 +55,48 @@ export default function Home() {
 }
 
 function ClockDisplay(
+  clock: Clock,
   clockMode: ClockMode,
-  setClockMode: (clockMode: ClockMode) => void,
-  clock: Clock
+  setClockMode: (mode: ClockMode) => void
 ) {
-  const [chapterIndex, setChapterIndex] = useState<number>(
-    clock.state.chapterIndex
-  );
-  const [hours, setHours] = useState<number>(clock.state.seconds);
-  const [minutes, setMinutes] = useState<number>(clock.state.seconds);
-  const [seconds, setSeconds] = useState<number>(clock.state.seconds);
-  const [inEssay, setInEssay] = useState<boolean>(clock.settings.withEssay);
-  const [percent, setPercent] = useState<number>(0);
-  clock.clockCB = (state: ClockCB) => {
-    if (chapterIndex !== state.chapterIndex)
-      setChapterIndex(state.chapterIndex);
-    if (hours !== state.hours) setHours(state.hours);
-    if (minutes !== state.minutes) setMinutes(state.minutes);
-    if (seconds !== state.seconds) setSeconds(state.seconds);
-    if (inEssay !== state.inEssay) setInEssay(state.inEssay);
-    if (percent !== state.percent) setPercent(state.percent);
-  };
+  const [mode, setMode] = useState(clockMode);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+  const [chapterIndex, setChapterIndex] = useState(0);
+  const [percent, setPercent] = useState(0);
+  const [inEssay, setInEssay] = useState(true);
 
-  const [settingsCounter, settingsUpdated] = useState(0);
-  clock.settingsCB = () => settingsUpdated(settingsCounter + 1);
+  viewUpdater.stateCB = (state) => {
+    if (state.mode !== mode) setMode(state.mode);
+    if (state.hours !== hours) setHours(state.hours);
+    if (state.minutes !== minutes) setMinutes(state.minutes);
+    if (state.seconds !== seconds) setSeconds(state.seconds);
+    if (state.chapterIndex !== chapterIndex)
+      setChapterIndex(state.chapterIndex);
+    if (state.percent !== percent) setPercent(state.percent);
+    if (state.inEssay !== inEssay) setInEssay(state.inEssay);
+  };
+  if (mode !== clockMode) setClockMode(mode);
 
   const startClick = () => {
-    clock.startClock();
-    setClockMode(ClockMode.On);
+    clock.start();
+    viewUpdater.activate();
   };
   const stopClick = () => {
-    clock.stopClock();
-    setClockMode(ClockMode.Paused);
+    viewUpdater.now();
+    clock.stop();
+    viewUpdater.deactivate();
+    setMode(ClockMode.Paused);
   };
   const continueClick = () => {
-    clock.continueClock();
-    setClockMode(ClockMode.On);
+    clock.continue();
+    viewUpdater.activate();
   };
   const getAction = () => {
-    switch (clockMode) {
+    switch (mode) {
       case ClockMode.Off:
+      case ClockMode.Done:
         return startClick;
       case ClockMode.On:
         return stopClick;
@@ -110,8 +105,9 @@ function ClockDisplay(
     }
   };
   const resetClick = () => {
-    clock.resetClock();
-    setClockMode(ClockMode.Off);
+    clock.reset();
+    viewUpdater.deactivate();
+    viewUpdater.now();
   };
 
   return (
@@ -136,9 +132,7 @@ function ClockDisplay(
         }}
       />
       <Typography variant="h3">
-        {inEssay
-          ? "Essay"
-          : "Chapter " + (chapterIndex + (clock.settings.withEssay ? 0 : 1))}
+        {inEssay ? "Essay" : "Chapter " + chapterIndex}
       </Typography>
       <Typography variant="h4">
         {hours > 0 ? hours.toString().padStart(2, "0") + " : " : ""}
@@ -152,18 +146,20 @@ function ClockDisplay(
           startIcon={
             {
               [ClockMode.Off]: <StartIcon />,
+              [ClockMode.Done]: <StartIcon />,
               [ClockMode.On]: <StopIcon />,
               [ClockMode.Paused]: <ContinueIcon />,
-            }[clockMode]
+            }[mode]
           }
           onClick={getAction()}
         >
           {
             {
               [ClockMode.Off]: "Start",
+              [ClockMode.Done]: "Start",
               [ClockMode.On]: "Stop",
               [ClockMode.Paused]: "Continue",
-            }[clockMode]
+            }[mode]
           }
         </Button>
         <Button
