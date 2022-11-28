@@ -38,7 +38,7 @@ const SettingsSX: SxProps = {
 const AccordionDetailsSX: SxProps = {
   paddingInline: ".5rem",
 } as const;
-const SettingsSpacing = { xs: 1, sm: 2, md: 2.5 } as const;
+const SettingsSpacing = { xs: 1.5, sm: 2, md: 2.5 } as const;
 const SettingsTypographyVariant = "body2" as const;
 
 function SettingsToggle({
@@ -60,8 +60,7 @@ function SettingsToggle({
     <FormControlLabel
       control={
         <Switch
-          sx={{ padding: 0.5 }}
-          size="small"
+          size="medium"
           disabled={disabled}
           checked={settings[field] as boolean}
           onClick={(event) => {
@@ -149,18 +148,22 @@ function DisplaySettingsSection({
             Display Settings
           </Typography>
         </AccordionSummary>
-        <AccordionDetails sx={AccordionDetailsSX}>
-          <Stack sx={centeredSX} spacing={SettingsSpacing} direction="column">
+        <AccordionDetails>
+          <Stack
+            sx={AccordionDetailsSX}
+            spacing={SettingsSpacing}
+            direction="column"
+          >
             <Stack sx={centeredSX} spacing={1.5}>
               <SettingsToggle
                 field="notifyEnds"
-                label="Notify when chapter or essay ends"
+                label="Notify when chapters ends"
                 settings={clock.settings}
                 setSettings={_setSettings}
               />
               <SettingsToggle
                 field="resetVisualClockEssay"
-                label="Reset clock when easay ends"
+                label="Reset clock after easay"
                 settings={clock.settings}
                 setSettings={(newSettings) => {
                   _setSettings({
@@ -173,13 +176,13 @@ function DisplaySettingsSection({
               <SettingsToggle
                 disabled={!clock.settings.resetVisualClockEssay}
                 field="resetVisualClockChapter"
-                label="Reset clock when chapter ends"
+                label="Reset clock after chapters"
                 settings={clock.settings}
                 setSettings={_setSettings}
               />
               <SettingsToggle
                 field="chapterPercent"
-                label="Circular bar shows only chapter progress"
+                label="Circular bar represents current chapter"
                 settings={clock.settings}
                 setSettings={_setSettings}
               />
@@ -220,14 +223,18 @@ function SettingsSection({
         <AccordionSummary expandIcon={<ExpandIcon />}>
           <Typography variant="h6" sx={centeredSX}>
             <SettingsIcon style={{ marginRight: 6 }} />
-            Settings
+            Time Settings
             <Typography variant="body2" sx={{ marginLeft: 2 }}>
               {active ? "reset clock to enable" : ""}
             </Typography>
           </Typography>
         </AccordionSummary>
-        <AccordionDetails sx={AccordionDetailsSX}>
-          <Stack sx={centeredSX} spacing={SettingsSpacing} direction="column">
+        <AccordionDetails>
+          <Stack
+            sx={AccordionDetailsSX}
+            spacing={SettingsSpacing}
+            direction="column"
+          >
             <Stack direction="row" sx={centeredSX}>
               <SettingsToggle
                 field="withEssay"
