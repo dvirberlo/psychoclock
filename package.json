@@ -3,6 +3,21 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "description": "A modern and customizable clock to simulate a psychometric test",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dvirberlo/psychoclock.git"
+  },
+  "author": {
+    "name": "Dvir Berlowitz",
+    "email": "dvir.berl@gmail.com",
+    "url": "https://github.com/dvirberlo"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/dvirberlo/psychoclock/issues"
+  },
+  "homepage": "https://psychoclock.vercel.app",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

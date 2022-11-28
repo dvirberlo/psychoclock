@@ -25,10 +25,13 @@ export default function About() {
               justifyContent: "center",
             }}
           >
-            This web app was build in one day using React, TypeScript, and MUI.
+            This web app was build in one day using React(Vite), TypeScript, and
+            MUI.
             <br />
-            It's a simple clock app for those who want to simulate a
-            psychometric test.
+            It is a modern and customizable clock to simulate a psychometric
+            test.
+            <br />
+            Its focus is modern and simple design, yet packed with features.
             <br />
           </Typography>
           <Button
