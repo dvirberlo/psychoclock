@@ -26,27 +26,6 @@ export default function AppNavBar({ pages }: { pages: Page[] }) {
           />
           Psycho Clock
         </Typography>
-        <Typography
-          variant="body1"
-          component="div"
-          sx={{ flexGrow: 1, display: { sm: "none", md: "block" } }}
-        >
-          <script
-            async
-            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8145571465576979"
-            crossOrigin="anonymous"
-          ></script>
-          {/* <!-- Horizontal Ad --> */}
-          <ins
-            className="adsbygoogle"
-            style={{ display: "block" }}
-            data-ad-client="ca-pub-8145571465576979"
-            data-ad-slot="8731925237"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-          ></ins>
-          <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-        </Typography>
         <Box>
           {pages.map((page) => (
             <Button
