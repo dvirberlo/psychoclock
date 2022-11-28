@@ -143,9 +143,7 @@ export class Clock {
         );
       baseTime += this.settings.secondsLeftCount * 1000;
       if (baseTime > 0) {
-        if (i === this.settings.chaptersCount - 1)
-          this.timeouts.push(setTimeout(() => this.done(), baseTime));
-        else
+        if (i !== this.settings.chaptersCount - 1)
           this.timeouts.push(
             setTimeout(() => {
               if (this.settings.notifyEnds) this.notifier.nextChapter();
@@ -153,6 +151,7 @@ export class Clock {
           );
       }
     }
+    this.timeouts.push(setTimeout(() => this.done(), baseTime));
   }
 
   public getView(): ClockViewState {
