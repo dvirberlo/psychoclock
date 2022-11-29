@@ -59,27 +59,33 @@ function SettingsToggle({
   display?: boolean;
 }) {
   return (
-    <FormControlLabel
+    <Stack
+      direction="row"
+      spacing={1}
       sx={{
+        ...centeredSX,
         display: display ? "flex" : "none",
       }}
-      control={
-        <Switch
-          size="medium"
-          disabled={disabled}
-          checked={settings[field] as boolean}
-          onClick={(event) => {
-            setSettings({
-              [field]: !settings[field],
-            });
-          }}
-        />
-      }
-      label={
-        <Typography variant={SettingsTypographyVariant}>{label}</Typography>
-      }
-      labelPlacement="end"
-    />
+    >
+      <FormControlLabel
+        control={
+          <Switch
+            size="medium"
+            disabled={disabled}
+            checked={settings[field] as boolean}
+            onClick={(event) => {
+              setSettings({
+                [field]: !settings[field],
+              });
+            }}
+          />
+        }
+        label={
+          <Typography variant={SettingsTypographyVariant}>{label}</Typography>
+        }
+        labelPlacement="end"
+      />
+    </Stack>
   );
 }
 
@@ -176,39 +182,37 @@ function DisplaySettingsSection({
             spacing={SettingsSpacing}
             direction="column"
           >
-            <Stack sx={centeredSX} spacing={1.5}>
-              <SettingsToggle
-                field="notifyEnds"
-                label="Notify when chapters ends"
-                settings={clock.settings}
-                setSettings={_setSettings}
-              />
-              <SettingsToggle
-                field="resetVisualClockEssay"
-                label="Reset clock after easay"
-                settings={clock.settings}
-                setSettings={(newSettings) => {
-                  _setSettings({
-                    ...newSettings,
-                    resetVisualClockChapter:
-                      !clock.settings.resetVisualClockEssay,
-                  });
-                }}
-              />
-              <SettingsToggle
-                disabled={!clock.settings.resetVisualClockEssay}
-                field="resetVisualClockChapter"
-                label="Reset clock after chapters"
-                settings={clock.settings}
-                setSettings={_setSettings}
-              />
-              <SettingsToggle
-                field="chapterPercent"
-                label="Circular bar represents current chapter"
-                settings={clock.settings}
-                setSettings={_setSettings}
-              />
-            </Stack>
+            <SettingsToggle
+              field="notifyEnds"
+              label="Notify when chapters ends"
+              settings={clock.settings}
+              setSettings={_setSettings}
+            />
+            <SettingsToggle
+              field="resetVisualClockEssay"
+              label="Reset clock after easay"
+              settings={clock.settings}
+              setSettings={(newSettings) => {
+                _setSettings({
+                  ...newSettings,
+                  resetVisualClockChapter:
+                    !clock.settings.resetVisualClockEssay,
+                });
+              }}
+            />
+            <SettingsToggle
+              disabled={!clock.settings.resetVisualClockEssay}
+              field="resetVisualClockChapter"
+              label="Reset clock after chapters"
+              settings={clock.settings}
+              setSettings={_setSettings}
+            />
+            <SettingsToggle
+              field="chapterPercent"
+              label="Circular bar represents current chapter"
+              settings={clock.settings}
+              setSettings={_setSettings}
+            />
           </Stack>
         </AccordionDetails>
       </Accordion>
@@ -257,14 +261,12 @@ function SettingsSection({
             spacing={SettingsSpacing}
             direction="column"
           >
-            <Stack direction="row" sx={centeredSX}>
-              <SettingsToggle
-                field="withEssay"
-                label="Essay at start"
-                settings={clock.settings}
-                setSettings={_setSettings}
-              />
-            </Stack>
+            <SettingsToggle
+              field="withEssay"
+              label="Essay at start"
+              settings={clock.settings}
+              setSettings={_setSettings}
+            />
             <SettingsNumberInput
               before="Essay"
               after="minutes long"

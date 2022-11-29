@@ -20,10 +20,10 @@ let _DEFAULT_SETTINGS = {
   chaptersCount: 8,
   chapterSeconds: 20 * 60,
 
-  notifyEnds: true,
   notifyMinutesLeft: true,
   secondsLeftCount: 5 * 60,
 
+  notifyEnds: true,
   resetVisualClockEssay: true,
   resetVisualClockChapter: true,
   chapterPercent: true,
@@ -37,7 +37,8 @@ export namespace PersistentSettings {
     const storage = localStorage.getItem(SETTINGS_STORAGE_KEY);
     loaded = true;
     if (storage != null) return JSON.parse(storage) as Partial<ClockSettings>;
-    return {};
+    save(DEFAULT_SETTINGS);
+    return DEFAULT_SETTINGS;
   };
   export const save = (settings: ClockSettings) => {
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
@@ -112,6 +113,7 @@ export class Clock {
 
   private defineTimeouts() {
     let baseTime = -this.activatedTime;
+    // Essay:
     if (this.settings.withEssay) {
       baseTime +=
         (this.settings.essaySeconds - this.settings.secondsLeftCount) * 1000;
@@ -123,6 +125,7 @@ export class Clock {
           }, baseTime)
         );
       }
+      // Before essay ends:
       baseTime += this.settings.secondsLeftCount * 1000;
       if (baseTime > 0)
         this.timeouts.push(
@@ -141,6 +144,7 @@ export class Clock {
               this.notifier.minutesLeft(this.settings.secondsLeftCount / 60);
           }, baseTime)
         );
+      // Before chapter ends:
       baseTime += this.settings.secondsLeftCount * 1000;
       if (baseTime > 0) {
         if (i !== this.settings.chaptersCount - 1)
@@ -151,6 +155,7 @@ export class Clock {
           );
       }
     }
+    // End:
     this.timeouts.push(setTimeout(() => this.done(), baseTime));
   }
 
@@ -208,29 +213,25 @@ export class Clock {
     inEssay: boolean;
   } {
     const activeTime = Date.now() - this.laststartTime + this.activatedTime;
+
+    const inEssay =
+      this.settings.withEssay && activeTime < this.settings.essaySeconds * 1000;
+
     let chapterTime = activeTime;
     let chapterIndex = 0;
-    if (this.settings.withEssay) {
-      if (activeTime > this.settings.essaySeconds * 1000) {
-        chapterTime -= this.settings.essaySeconds * 1000;
-        chapterTime = chapterTime % (this.settings.chapterSeconds * 1000);
-        chapterIndex =
-          1 +
-          Math.floor(
-            (activeTime - this.settings.essaySeconds * 1000) /
-              (this.settings.chapterSeconds * 1000)
-          );
-      }
-    } else {
-      chapterTime = activeTime % (this.settings.chapterSeconds * 1000);
-      chapterIndex = Math.floor(
-        activeTime / (this.settings.chapterSeconds * 1000)
-      );
+
+    if (this.settings.withEssay && !inEssay) {
+      chapterTime -= this.settings.essaySeconds * 1000;
+      chapterIndex += 1;
     }
-    const inEssay =
-      this.settings.withEssay && activeTime < this.settings.essaySeconds * 1000
-        ? true
-        : false;
+
+    if (!inEssay) {
+      chapterIndex += Math.floor(
+        chapterTime / (this.settings.chapterSeconds * 1000)
+      );
+      chapterTime = chapterTime % (this.settings.chapterSeconds * 1000);
+    }
+
     return {
       activeTime,
       chapterTime,
