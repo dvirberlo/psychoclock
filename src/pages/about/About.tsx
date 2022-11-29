@@ -23,26 +23,31 @@ export default function About() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              whiteSpace: "pre-line",
             }}
           >
             This web app was build in one day using React(Vite), TypeScript, and
             MUI.
-            <br />
+            {"\n"}
             It is a modern and customizable clock to simulate a psychometric
             test.
-            <br />
+            {"\n"}
             Its focus is modern and simple design, yet packed with features.
-            <br />
           </Typography>
           <Button
-            sx={{
-              maxWidth: 200,
-            }}
             onClick={() =>
               (document.location.href = "https://github.com/dvirberlo")
             }
           >
             Made by @dvirberlo
+          </Button>
+          <Button
+            onClick={() =>
+              (document.location.href =
+                "https://github.com/dvirberlo/psychoclock")
+            }
+          >
+            Source on GitHub
           </Button>
         </div>
       </Stack>

@@ -44,20 +44,25 @@ const SettingsTypographyVariant = "body2" as const;
 function SettingsToggle({
   field,
   label,
-  disabled = false,
   settings,
   setSettings,
   stateCounter = 0,
+  disabled = false,
+  display = true,
 }: {
   field: keyof ClockSettings;
   label: string;
-  disabled?: boolean;
   settings: ClockSettings;
   setSettings: (settings: Partial<ClockSettings>) => void;
   stateCounter?: number;
+  disabled?: boolean;
+  display?: boolean;
 }) {
   return (
     <FormControlLabel
+      sx={{
+        display: display ? "flex" : "none",
+      }}
       control={
         <Switch
           size="medium"
@@ -86,6 +91,9 @@ function SettingsNumberInput({
   float = true,
   sx = {},
   devider = 1,
+  display = true,
+  before = "",
+  after = "",
   stateCounter = 0,
 }: {
   field: keyof ClockSettings;
@@ -95,25 +103,39 @@ function SettingsNumberInput({
   float?: boolean;
   sx?: SxProps;
   devider?: number;
+  display?: boolean;
+  before?: string;
+  after?: string;
   stateCounter?: number;
 }) {
   return (
-    <TextField
-      sx={sx}
-      disabled={disabled}
-      inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
-      type="number"
-      variant="standard"
-      defaultValue={((settings[field] as number) / devider).toString()}
-      onChange={(event) => {
-        setSettings({
-          [field]:
-            (float
-              ? parseFloat(event.target.value)
-              : parseInt(event.target.value)) * devider,
-        });
+    <Stack
+      direction="row"
+      spacing={1}
+      sx={{
+        ...centeredSX,
+        display: display ? "flex" : "none",
       }}
-    />
+    >
+      <Typography variant={SettingsTypographyVariant}>{before}</Typography>
+      <TextField
+        sx={sx}
+        disabled={disabled}
+        inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
+        type="number"
+        variant="standard"
+        defaultValue={((settings[field] as number) / devider).toString()}
+        onChange={(event) => {
+          setSettings({
+            [field]:
+              (float
+                ? parseFloat(event.target.value)
+                : parseInt(event.target.value)) * devider,
+          });
+        }}
+      />
+      <Typography variant={SettingsTypographyVariant}>{after}</Typography>
+    </Stack>
   );
 }
 
@@ -243,49 +265,38 @@ function SettingsSection({
                 setSettings={_setSettings}
               />
             </Stack>
-            <Stack direction="row" sx={centeredSX}>
-              <Typography variant={SettingsTypographyVariant}>Essay</Typography>
-              <SettingsNumberInput
-                sx={{ marginInline: ".5rem" }}
-                disabled={!clock.settings.withEssay}
-                field="essaySeconds"
-                settings={clock.settings}
-                setSettings={_setSettings}
-                devider={60}
-              />
-              <Typography variant={SettingsTypographyVariant}>
-                minutes long
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={2} sx={centeredSX}>
-              <SettingsNumberInput
-                field="chaptersCount"
-                settings={clock.settings}
-                setSettings={_setSettings}
-                float={false}
-                stateCounter={stateCounter}
-              />
-              <Typography variant={SettingsTypographyVariant}>
-                chapters
-              </Typography>
-            </Stack>
-            <Stack direction="row" sx={centeredSX}>
-              <Typography variant={SettingsTypographyVariant}>
-                Each chapter
-              </Typography>
-              <SettingsNumberInput
-                sx={{ marginInline: ".5rem" }}
-                disabled={clock.settings.chaptersCount < 1}
-                field="chapterSeconds"
-                settings={clock.settings}
-                setSettings={_setSettings}
-                stateCounter={stateCounter}
-                devider={60}
-              />
-              <Typography variant={SettingsTypographyVariant}>
-                minutes long
-              </Typography>
-            </Stack>
+            <SettingsNumberInput
+              before="Essay"
+              after="minutes long"
+              sx={{ marginInline: ".5rem" }}
+              display={clock.settings.withEssay}
+              field="essaySeconds"
+              settings={clock.settings}
+              setSettings={_setSettings}
+              devider={60}
+            />
+            <SettingsNumberInput
+              after="chapters"
+              field="chaptersCount"
+              settings={clock.settings}
+              setSettings={_setSettings}
+              float={false}
+              stateCounter={stateCounter}
+            />
+            <SettingsNumberInput
+              before="Each chapter"
+              after="minutes long"
+              sx={{ marginInline: ".5rem" }}
+              display={
+                isNaN(clock.settings.chaptersCount) ||
+                clock.settings.chaptersCount > 0
+              }
+              field="chapterSeconds"
+              settings={clock.settings}
+              setSettings={_setSettings}
+              stateCounter={stateCounter}
+              devider={60}
+            />
             <Stack direction="row" sx={centeredSX}>
               <SettingsToggle
                 field="notifyMinutesLeft"
@@ -295,23 +306,17 @@ function SettingsSection({
                 setSettings={_setSettings}
               />
             </Stack>
-            <Stack direction="row" sx={centeredSX}>
-              <Typography variant={SettingsTypographyVariant}>
-                Notify
-              </Typography>
-              <SettingsNumberInput
-                sx={{ marginInline: "0.5em" }}
-                disabled={!clock.settings.notifyMinutesLeft}
-                field="secondsLeftCount"
-                settings={clock.settings}
-                setSettings={_setSettings}
-                stateCounter={stateCounter}
-                devider={60}
-              />
-              <Typography variant={SettingsTypographyVariant}>
-                minutes before chapter ends
-              </Typography>
-            </Stack>
+            <SettingsNumberInput
+              before="Notify"
+              after="minutes before chapter ends"
+              sx={{ marginInline: "0.5em" }}
+              display={clock.settings.notifyMinutesLeft}
+              field="secondsLeftCount"
+              settings={clock.settings}
+              setSettings={_setSettings}
+              stateCounter={stateCounter}
+              devider={60}
+            />
           </Stack>
         </AccordionDetails>
       </Accordion>
