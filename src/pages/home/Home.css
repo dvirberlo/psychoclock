@@ -1,0 +1,15 @@
+@keyframes ani-flickering {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    scale: 1.2;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+.flickering {
+  animation: ani-flickering 1.5s ease-in-out infinite;
+}

@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Clock, ClockMode, ViewUpdater } from "../../services/clock";
 import { setupShortcuts } from "../../services/clock-shortcuts";
 import { SettingsComponent } from "./Settings";
+import "./Home.css";
 
 const clock = new Clock();
 const CLOCK_INTERVAL = 500;
@@ -142,6 +143,14 @@ function ClockDisplay(
             }[mode]
           }
           onClick={getAction()}
+          className={
+            {
+              [ClockMode.Off]: "flickering",
+              [ClockMode.Done]: "flickering",
+              [ClockMode.On]: "",
+              [ClockMode.Paused]: "flickering",
+            }[mode]
+          }
         >
           {
             {

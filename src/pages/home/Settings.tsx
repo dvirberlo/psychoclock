@@ -231,27 +231,20 @@ function SettingsSection({
   stateCounter: number;
   updateState: (stateCounter: number) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const _setSettings = (newSettings: Partial<ClockSettings>) => {
     clock.setSettings(newSettings);
     updateState(stateCounter + 1);
   };
-  const active = clockMode !== ClockMode.Off && clockMode !== ClockMode.Done;
-  if (active && expanded) setExpanded(false);
+  const disabled = clockMode !== ClockMode.Off && clockMode !== ClockMode.Done;
   return (
     <Container sx={SettingsSX} maxWidth={false}>
-      <Accordion
-        style={{ width: "100%" }}
-        disabled={clockMode !== ClockMode.Off && clockMode !== ClockMode.Done}
-        expanded={expanded}
-        onChange={() => setExpanded(!expanded)}
-      >
+      <Accordion style={{ width: "100%" }}>
         <AccordionSummary expandIcon={<ExpandIcon />}>
           <Typography variant="h6" sx={centeredSX}>
             <SettingsIcon style={{ marginRight: 6 }} />
             Time Settings
             <Typography variant="body2" sx={{ marginLeft: 2 }}>
-              {active ? "reset clock to enable" : ""}
+              {disabled ? "reset clock to enable" : ""}
             </Typography>
           </Typography>
         </AccordionSummary>
@@ -266,6 +259,7 @@ function SettingsSection({
               label="Essay at start"
               settings={clock.settings}
               setSettings={_setSettings}
+              disabled={disabled}
             />
             <SettingsNumberInput
               before="Essay"
@@ -276,6 +270,7 @@ function SettingsSection({
               settings={clock.settings}
               setSettings={_setSettings}
               devider={60}
+              disabled={disabled}
             />
             <SettingsNumberInput
               after="chapters"
@@ -284,6 +279,7 @@ function SettingsSection({
               setSettings={_setSettings}
               float={false}
               stateCounter={stateCounter}
+              disabled={disabled}
             />
             <SettingsNumberInput
               before="Each chapter"
@@ -298,16 +294,16 @@ function SettingsSection({
               setSettings={_setSettings}
               stateCounter={stateCounter}
               devider={60}
+              disabled={disabled}
             />
-            <Stack direction="row" sx={centeredSX}>
-              <SettingsToggle
-                field="notifyMinutesLeft"
-                label="Notify when a chapter nears its end"
-                stateCounter={stateCounter}
-                settings={clock.settings}
-                setSettings={_setSettings}
-              />
-            </Stack>
+            <SettingsToggle
+              field="notifyMinutesLeft"
+              label="Notify when a chapter nears its end"
+              stateCounter={stateCounter}
+              settings={clock.settings}
+              setSettings={_setSettings}
+              disabled={disabled}
+            />
             <SettingsNumberInput
               before="Notify"
               after="minutes before chapter ends"
@@ -318,6 +314,7 @@ function SettingsSection({
               setSettings={_setSettings}
               stateCounter={stateCounter}
               devider={60}
+              disabled={disabled}
             />
           </Stack>
         </AccordionDetails>
