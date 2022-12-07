@@ -9,7 +9,7 @@ import { Stack } from "@mui/system";
 import { useState } from "react";
 import { Clock, ClockMode, ViewUpdater } from "../../services/clock";
 import { setupShortcuts } from "../../services/clock-shortcuts";
-import { SettingsComponent } from "./Settings";
+import { ClockSettingsComponent } from "./Settings";
 import "./Home.css";
 
 const clock = new Clock();
@@ -30,8 +30,7 @@ export default function Home() {
       }}
     >
       {ClockDisplay(clock, clockMode, setClockMode)}
-      <SettingsComponent clock={clock} clockMode={clockMode} />
-      {/* <!-- Horizontal Ad --> */}
+      <ClockSettingsComponent clock={clock} clockMode={clockMode} />
     </Container>
   );
 }

@@ -145,7 +145,7 @@ function SettingsNumberInput({
   );
 }
 
-function DisplaySettingsSection({
+function DisplaySettings({
   clockMode,
   clock,
   stateCounter,
@@ -220,7 +220,7 @@ function DisplaySettingsSection({
   );
 }
 
-function SettingsSection({
+function TimeSettings({
   clockMode,
   clock,
   stateCounter,
@@ -302,7 +302,6 @@ function SettingsSection({
               stateCounter={stateCounter}
               settings={clock.settings}
               setSettings={_setSettings}
-              disabled={disabled}
             />
             <SettingsNumberInput
               before="Notify"
@@ -314,7 +313,6 @@ function SettingsSection({
               setSettings={_setSettings}
               stateCounter={stateCounter}
               devider={60}
-              disabled={disabled}
             />
           </Stack>
         </AccordionDetails>
@@ -323,7 +321,7 @@ function SettingsSection({
   );
 }
 
-export function SettingsComponent({
+export function ClockSettingsComponent({
   clockMode,
   clock,
 }: {
@@ -340,13 +338,13 @@ export function SettingsComponent({
   }
   return (
     <Stack>
-      <SettingsSection
+      <TimeSettings
         stateCounter={stateCounter}
         updateState={updateState}
         clockMode={clockMode}
         clock={clock}
       />
-      <DisplaySettingsSection
+      <DisplaySettings
         stateCounter={stateCounter}
         updateState={updateState}
         clockMode={clockMode}
