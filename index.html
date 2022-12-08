@@ -21,32 +21,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <div
-      style="
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-        margin-top: 50px;
-      "
-      id="adDiv"
-    ></div>
-    <script defer async>
-      const adAd = async () => {
-        setTimeout(() => {
-          document.getElementById(
-            "adDiv"
-          ).innerHTML = `<iframe src="/ad.html" sandbox="allow-scripts allow-same-origin" style="border: 0px; width: 500px; height: 100px;"></iframe>`;
-        }, 1000);
-      };
-      const listen = (event) => {
-        if (event.target.readyState !== "complete") return;
-        adAd();
-        document.removeEventListener("readystatechange", listen);
-      };
-      if (document.readyState === "complete") adAd();
-      else document.addEventListener("readystatechange", listen);
-    </script>
   </body>
 </html>
