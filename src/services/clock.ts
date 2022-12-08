@@ -199,7 +199,7 @@ export class Clock {
       chapterIndex: chapterCounter + 1,
       inEssay,
       hours: Math.floor(chapterSeconds / 3600),
-      minutes: Math.floor(chapterSeconds / 60),
+      minutes: Math.floor((chapterSeconds / 60) % 60),
       seconds: Math.floor(chapterSeconds % 60),
       percent: percent > 100 ? 100 : percent,
       mode: this.mode,
