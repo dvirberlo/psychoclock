@@ -8,9 +8,10 @@ import { Button, CircularProgress, Container, Typography } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useState } from "react";
 import { Clock, ClockMode, ViewUpdater } from "../../services/clock";
-import { setupShortcuts } from "../../services/clock-shortcuts";
-import { ClockSettingsComponent } from "./Settings";
+
+import { ClockShortcutsDialog } from "./ClockShortcuts";
 import "./Home.css";
+import { ClockSettingsComponent } from "./Settings";
 
 const clock = new Clock();
 const CLOCK_INTERVAL = 500;
@@ -100,7 +101,7 @@ function ClockDisplay(
         marginBlock: 13,
       }}
     >
-      {setupShortcuts(getAction(), resetClick)}
+      <ClockShortcutsDialog toggle={getAction()} reset={resetClick} />
       <CircularProgress
         variant="determinate"
         value={percent}

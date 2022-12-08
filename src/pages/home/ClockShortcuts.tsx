@@ -1,33 +1,46 @@
-import { Dialog, DialogTitle, Typography } from "@mui/material";
-import { Container, Stack } from "@mui/system";
+import { Dialog, Typography } from "@mui/material";
+import { Stack } from "@mui/system";
 import { useState } from "react";
 
-export const ClockShortcuts = {
+const ClockShortcuts = {
   toggle: { key: "E", details: "Toggle Clock On/Off" },
   reset: { key: "R", details: "Reset Clock" },
-  // question: { key: "Q", details: "Move to next question" },
   showShortcuts: { key: "?", details: "Show Shortcuts" },
-};
+} as const;
 
-export function setupShortcuts(toggle: () => void, reset: () => void) {
+let _setDialogOpen = (b: boolean) => {},
+  _toggle = () => {},
+  _reset = () => {};
+
+document.addEventListener("keydown", (e) => {
+  let captured = true;
+  switch (e.key) {
+    case ClockShortcuts.toggle.key:
+      _toggle();
+      break;
+    case ClockShortcuts.reset.key:
+      _reset();
+      break;
+    case ClockShortcuts.showShortcuts.key:
+      _setDialogOpen(true);
+      break;
+    default:
+      captured = false;
+  }
+  if (captured) e.preventDefault();
+});
+
+export function ClockShortcutsDialog({
+  toggle,
+  reset,
+}: {
+  toggle: () => void;
+  reset: () => void;
+}) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  document.onkeydown = (e) => {
-    let captured = true;
-    switch (e.key) {
-      case ClockShortcuts.toggle.key:
-        toggle();
-        break;
-      case ClockShortcuts.reset.key:
-        reset();
-        break;
-      case ClockShortcuts.showShortcuts.key:
-        setDialogOpen(true);
-        break;
-      default:
-        captured = false;
-    }
-    if (captured) e.preventDefault();
-  };
+  _setDialogOpen = setDialogOpen;
+  _toggle = toggle;
+  _reset = reset;
   return (
     <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
       <Typography
