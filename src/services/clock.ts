@@ -96,10 +96,12 @@ export class Clock {
   }
   public setSettings(settings: Partial<ClockSettings>) {
     // Note: it tries to work also with a running clock, but it can result in unexpected behavior (like not stop forever)
-    const hasTimeSettings = Clock.timeSettings.some((key) => key in settings);
-    if (hasTimeSettings && this.mode === ClockMode.On) this.stop(true);
+    const hasTimeSettings =
+      this.mode === ClockMode.On &&
+      Clock.timeSettings.some((key) => key in settings);
+    if (hasTimeSettings) this.stop(true);
     this.settings = { ...this.settings, ...settings };
-    if (hasTimeSettings && this.mode === ClockMode.On) this.continue(true);
+    if (hasTimeSettings) this.continue(true);
     (async () => {
       PersistentSettings.save(this.settings);
     })();

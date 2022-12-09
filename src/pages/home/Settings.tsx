@@ -1,7 +1,7 @@
 import {
   ExpandMoreRounded as ExpandIcon,
   SettingsRounded as SettingsIcon,
-  VisibilityRounded as DisplaySettingsIcon,
+  TuneRounded as MoreSettingsIcon,
 } from "@mui/icons-material";
 import {
   Accordion,
@@ -101,6 +101,7 @@ function SettingsNumberInput({
   before = "",
   after = "",
   stateCounter = 0,
+  nan = undefined,
 }: {
   field: keyof ClockSettings;
   settings: ClockSettings;
@@ -113,6 +114,7 @@ function SettingsNumberInput({
   before?: string;
   after?: string;
   stateCounter?: number;
+  nan?: number;
 }) {
   return (
     <Stack
@@ -132,91 +134,20 @@ function SettingsNumberInput({
         variant="standard"
         defaultValue={((settings[field] as number) / devider).toString()}
         onChange={(event) => {
+          let val = float
+            ? parseFloat(event.target.value)
+            : parseInt(event.target.value);
+          if (isNaN(val)) {
+            if (nan === undefined) return;
+            else val = nan;
+          }
           setSettings({
-            [field]:
-              (float
-                ? parseFloat(event.target.value)
-                : parseInt(event.target.value)) * devider,
+            [field]: val * devider,
           });
         }}
       />
       <Typography variant={SettingsTypographyVariant}>{after}</Typography>
     </Stack>
-  );
-}
-
-function DisplaySettings({
-  clockMode,
-  clock,
-  stateCounter,
-  updateState,
-}: {
-  clockMode: ClockMode;
-  clock: Clock;
-  stateCounter: number;
-  updateState: (stateCounter: number) => void;
-}) {
-  const _setSettings = (newSettings: Partial<ClockSettings>) => {
-    clock.setSettings(newSettings);
-    updateState(stateCounter + 1);
-  };
-  return (
-    <Container sx={SettingsSX} maxWidth={false}>
-      <Accordion style={{ width: "100%" }}>
-        <AccordionSummary expandIcon={<ExpandIcon />}>
-          <Typography
-            variant="h6"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <DisplaySettingsIcon style={{ marginRight: 6 }} />
-            Display Settings
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Stack
-            sx={AccordionDetailsSX}
-            spacing={SettingsSpacing}
-            direction="column"
-          >
-            <SettingsToggle
-              field="notifyEnds"
-              label="Notify when chapters ends"
-              settings={clock.settings}
-              setSettings={_setSettings}
-            />
-            <SettingsToggle
-              field="resetVisualClockEssay"
-              label="Reset clock after easay"
-              settings={clock.settings}
-              setSettings={(newSettings) => {
-                _setSettings({
-                  ...newSettings,
-                  resetVisualClockChapter:
-                    !clock.settings.resetVisualClockEssay,
-                });
-              }}
-            />
-            <SettingsToggle
-              disabled={!clock.settings.resetVisualClockEssay}
-              field="resetVisualClockChapter"
-              label="Reset clock after chapters"
-              settings={clock.settings}
-              setSettings={_setSettings}
-            />
-            <SettingsToggle
-              field="chapterPercent"
-              label="Circular bar represents current chapter"
-              settings={clock.settings}
-              setSettings={_setSettings}
-            />
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
-    </Container>
   );
 }
 
@@ -238,7 +169,7 @@ function TimeSettings({
   const disabled = clockMode !== ClockMode.Off && clockMode !== ClockMode.Done;
   return (
     <Container sx={SettingsSX} maxWidth={false}>
-      <Accordion style={{ width: "100%" }}>
+      <Accordion style={{ width: "100%" }} defaultExpanded={true}>
         <AccordionSummary expandIcon={<ExpandIcon />}>
           <Typography variant="h6" sx={centeredSX}>
             <SettingsIcon style={{ marginRight: 6 }} />
@@ -296,6 +227,50 @@ function TimeSettings({
               devider={60}
               disabled={disabled}
             />
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    </Container>
+  );
+}
+
+function MoreSettings({
+  clockMode,
+  clock,
+  stateCounter,
+  updateState,
+}: {
+  clockMode: ClockMode;
+  clock: Clock;
+  stateCounter: number;
+  updateState: (stateCounter: number) => void;
+}) {
+  const _setSettings = (newSettings: Partial<ClockSettings>) => {
+    clock.setSettings(newSettings);
+    updateState(stateCounter + 1);
+  };
+  return (
+    <Container sx={SettingsSX} maxWidth={false}>
+      <Accordion style={{ width: "100%" }}>
+        <AccordionSummary expandIcon={<ExpandIcon />}>
+          <Typography
+            variant="h6"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <MoreSettingsIcon style={{ marginRight: 6 }} />
+            More Settings
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack
+            sx={AccordionDetailsSX}
+            spacing={SettingsSpacing}
+            direction="column"
+          >
             <SettingsToggle
               field="notifyMinutesLeft"
               label="Notify when a chapter nears its end"
@@ -313,6 +288,37 @@ function TimeSettings({
               setSettings={_setSettings}
               stateCounter={stateCounter}
               devider={60}
+            />
+            <SettingsToggle
+              field="notifyEnds"
+              label="Notify when chapters ends"
+              settings={clock.settings}
+              setSettings={_setSettings}
+            />
+            <SettingsToggle
+              field="resetVisualClockEssay"
+              label="Reset clock after easay"
+              settings={clock.settings}
+              setSettings={(newSettings) => {
+                _setSettings({
+                  ...newSettings,
+                  resetVisualClockChapter:
+                    !clock.settings.resetVisualClockEssay,
+                });
+              }}
+            />
+            <SettingsToggle
+              disabled={!clock.settings.resetVisualClockEssay}
+              field="resetVisualClockChapter"
+              label="Reset clock after chapters"
+              settings={clock.settings}
+              setSettings={_setSettings}
+            />
+            <SettingsToggle
+              field="chapterPercent"
+              label="Circular bar represents current chapter"
+              settings={clock.settings}
+              setSettings={_setSettings}
             />
           </Stack>
         </AccordionDetails>
@@ -344,7 +350,7 @@ export function ClockSettingsComponent({
         clockMode={clockMode}
         clock={clock}
       />
-      <DisplaySettings
+      <MoreSettings
         stateCounter={stateCounter}
         updateState={updateState}
         clockMode={clockMode}
