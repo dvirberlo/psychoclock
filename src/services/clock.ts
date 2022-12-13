@@ -11,8 +11,7 @@ export type ClockViewState = {
   mode: ClockMode;
 };
 
-const SETTINGS_VERSION = 2 as const;
-const SETTINGS_STORAGE_KEY = `settingsV${SETTINGS_VERSION}` as const;
+export const SETTINGS_VERSION = 2 as const;
 let _DEFAULT_SETTINGS = {
   withEssay: true,
   essaySeconds: 30 * 60,
@@ -30,20 +29,6 @@ let _DEFAULT_SETTINGS = {
 };
 export type ClockSettings = typeof _DEFAULT_SETTINGS;
 export const DEFAULT_SETTINGS = { ..._DEFAULT_SETTINGS } as const;
-
-export namespace PersistentSettings {
-  export let loaded = false;
-  export const load = (): Partial<ClockSettings> => {
-    const storage = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    loaded = true;
-    if (storage != null) return JSON.parse(storage) as Partial<ClockSettings>;
-    save(DEFAULT_SETTINGS);
-    return DEFAULT_SETTINGS;
-  };
-  export const save = (settings: ClockSettings) => {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-  };
-}
 
 export enum ClockMode {
   On,
@@ -102,9 +87,6 @@ export class Clock {
     if (hasTimeSettings) this.stop(true);
     this.settings = { ...this.settings, ...settings };
     if (hasTimeSettings) this.continue(true);
-    (async () => {
-      PersistentSettings.save(this.settings);
-    })();
   }
 
   private done() {
@@ -245,10 +227,19 @@ export class Clock {
 
 export class ViewUpdater {
   private active = false;
+  public state: ClockViewState = {
+    mode: ClockMode.Off,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    chapterIndex: 0,
+    percent: 0,
+    inEssay: true,
+  };
   constructor(
     private clockInterval: number,
     private clock: Clock,
-    public stateCB: (state: ClockViewState) => void = (state) => {}
+    public stateCB: () => void = () => {}
   ) {}
   public activate() {
     if (this.active) return;
@@ -269,7 +260,8 @@ export class ViewUpdater {
   private _updateState(now = false) {
     if (!now && !this.active) return;
     const newState = this.clock.getView();
-    this.stateCB(newState);
+    this.state = newState;
+    this.stateCB();
     if (now) return;
     if (newState.mode !== ClockMode.Off)
       setTimeout(this.updateState.bind(this), this.clockInterval);

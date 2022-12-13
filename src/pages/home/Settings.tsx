@@ -1,27 +1,43 @@
 import {
   ExpandMoreRounded as ExpandIcon,
   SettingsRounded as SettingsIcon,
-  TuneRounded as MoreSettingsIcon,
+  TuneRounded as MoreSettingsIcon
 } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
-  AccordionSummary,
-  Container,
+  AccordionSummary, Container,
   FormControlLabel,
   Switch,
   SxProps,
   TextField,
-  Typography,
+  Typography
 } from "@mui/material";
 import { Stack } from "@mui/system";
-import { useState } from "react";
-import {
-  Clock,
-  ClockMode,
-  ClockSettings,
-  PersistentSettings,
-} from "../../services/clock";
+import { useForceUpdate } from "../../hooks/common";
+import { ClockMode } from "../../services/clock";
+import { ClientSettings } from "./clock-settings";
+import { GloablSettingsManager } from "./globals";
+
+export function ClockSettingsComponent({
+  clockMode,
+}: {
+  clockMode: ClockMode;
+}) {
+  const forceUpdate = useForceUpdate();
+  if (!GloablSettingsManager.loaded) {
+    GloablSettingsManager.load().then(() => {
+      forceUpdate();
+    });
+  }
+
+  return (
+    <Stack>
+      <TimeSettings clockMode={clockMode} />
+      <MoreSettings clockMode={clockMode} />
+    </Stack>
+  );
+}
 
 const centeredSX: SxProps = {
   display: "flex",
@@ -44,20 +60,24 @@ const SettingsTypographyVariant = "body2" as const;
 function SettingsToggle({
   field,
   label,
-  settings,
-  setSettings,
-  stateCounter = 0,
   disabled = false,
   display = true,
+  setSettings = (settings: Partial<ClientSettings>) =>
+    GloablSettingsManager.set(settings),
 }: {
-  field: keyof ClockSettings;
+  field: keyof ClientSettings;
   label: string;
-  settings: ClockSettings;
-  setSettings: (settings: Partial<ClockSettings>) => void;
-  stateCounter?: number;
   disabled?: boolean;
   display?: boolean;
+  setSettings?: (settings: Partial<ClientSettings>) => void;
 }) {
+  const value = GloablSettingsManager.get(field) as boolean;
+  const forceUpdate = useForceUpdate();
+  GloablSettingsManager.changeListeners["SettingsToggle:" + field] = (
+    updated
+  ) => {
+    if (field in updated) forceUpdate();
+  };
   return (
     <Stack
       direction="row"
@@ -72,10 +92,10 @@ function SettingsToggle({
           <Switch
             size="medium"
             disabled={disabled}
-            checked={settings[field] as boolean}
+            checked={value}
             onClick={(event) => {
               setSettings({
-                [field]: !settings[field],
+                [field]: !value,
               });
             }}
           />
@@ -91,8 +111,6 @@ function SettingsToggle({
 
 function SettingsNumberInput({
   field,
-  settings,
-  setSettings,
   disabled = false,
   float = true,
   sx = {},
@@ -100,12 +118,11 @@ function SettingsNumberInput({
   display = true,
   before = "",
   after = "",
-  stateCounter = 0,
   nan = undefined,
+  setSettings = (settings: Partial<ClientSettings>) =>
+    GloablSettingsManager.set(settings),
 }: {
-  field: keyof ClockSettings;
-  settings: ClockSettings;
-  setSettings: (settings: Partial<ClockSettings>) => void;
+  field: keyof ClientSettings;
   disabled?: boolean;
   float?: boolean;
   sx?: SxProps;
@@ -113,9 +130,10 @@ function SettingsNumberInput({
   display?: boolean;
   before?: string;
   after?: string;
-  stateCounter?: number;
   nan?: number;
+  setSettings?: (settings: Partial<ClientSettings>) => void;
 }) {
+  const value = GloablSettingsManager.settings[field] as number;
   return (
     <Stack
       direction="row"
@@ -132,7 +150,8 @@ function SettingsNumberInput({
         inputProps={{ min: 0, max: 99, style: { textAlign: "center" } }}
         type="number"
         variant="standard"
-        defaultValue={((settings[field] as number) / devider).toString()}
+        key={value}
+        defaultValue={(value / devider).toString()}
         onChange={(event) => {
           let val = float
             ? parseFloat(event.target.value)
@@ -151,22 +170,19 @@ function SettingsNumberInput({
   );
 }
 
-function TimeSettings({
-  clockMode,
-  clock,
-  stateCounter,
-  updateState,
-}: {
-  clockMode: ClockMode;
-  clock: Clock;
-  stateCounter: number;
-  updateState: (stateCounter: number) => void;
-}) {
-  const _setSettings = (newSettings: Partial<ClockSettings>) => {
-    clock.setSettings(newSettings);
-    updateState(stateCounter + 1);
-  };
+function TimeSettings({ clockMode }: { clockMode: ClockMode }) {
   const disabled = clockMode !== ClockMode.Off && clockMode !== ClockMode.Done;
+  const chaptersCount = GloablSettingsManager.get("chaptersCount") as number;
+  const withEssay = GloablSettingsManager.get("withEssay") as boolean;
+  const forceUpdate = useForceUpdate();
+  GloablSettingsManager.changeListeners["TimeSettings"] = (updated) => {
+    if ("withEssay" in updated) forceUpdate();
+    else if (
+      ("chaptersCount" in updated && updated["chaptersCount"] === 0) ||
+      chaptersCount === 0
+    )
+      forceUpdate();
+  };
   return (
     <Container sx={SettingsSX} maxWidth={false}>
       <Accordion style={{ width: "100%" }} defaultExpanded={true}>
@@ -188,42 +204,29 @@ function TimeSettings({
             <SettingsToggle
               field="withEssay"
               label="Essay at start"
-              settings={clock.settings}
-              setSettings={_setSettings}
               disabled={disabled}
             />
             <SettingsNumberInput
               before="Essay"
               after="minutes long"
               sx={{ marginInline: ".5rem" }}
-              display={clock.settings.withEssay}
+              display={withEssay}
               field="essaySeconds"
-              settings={clock.settings}
-              setSettings={_setSettings}
               devider={60}
               disabled={disabled}
             />
             <SettingsNumberInput
               after="chapters"
               field="chaptersCount"
-              settings={clock.settings}
-              setSettings={_setSettings}
               float={false}
-              stateCounter={stateCounter}
               disabled={disabled}
             />
             <SettingsNumberInput
               before="Each chapter"
               after="minutes long"
               sx={{ marginInline: ".5rem" }}
-              display={
-                isNaN(clock.settings.chaptersCount) ||
-                clock.settings.chaptersCount > 0
-              }
+              display={isNaN(chaptersCount) || chaptersCount > 0}
               field="chapterSeconds"
-              settings={clock.settings}
-              setSettings={_setSettings}
-              stateCounter={stateCounter}
               devider={60}
               disabled={disabled}
             />
@@ -234,20 +237,17 @@ function TimeSettings({
   );
 }
 
-function MoreSettings({
-  clockMode,
-  clock,
-  stateCounter,
-  updateState,
-}: {
-  clockMode: ClockMode;
-  clock: Clock;
-  stateCounter: number;
-  updateState: (stateCounter: number) => void;
-}) {
-  const _setSettings = (newSettings: Partial<ClockSettings>) => {
-    clock.setSettings(newSettings);
-    updateState(stateCounter + 1);
+function MoreSettings({ clockMode }: { clockMode: ClockMode }) {
+  const notifyMinutesLeft = GloablSettingsManager.get(
+    "notifyMinutesLeft"
+  ) as boolean;
+  const resetVisualClockEssay = GloablSettingsManager.get(
+    "resetVisualClockEssay"
+  ) as boolean;
+  const forceUpdate = useForceUpdate();
+  GloablSettingsManager.changeListeners["MoreSettings"] = (updated) => {
+    if ("resetVisualClockEssay" in updated || "notifyMinutesLeft" in updated)
+      forceUpdate();
   };
   return (
     <Container sx={SettingsSX} maxWidth={false}>
@@ -274,88 +274,42 @@ function MoreSettings({
             <SettingsToggle
               field="notifyMinutesLeft"
               label="Notify when a chapter nears its end"
-              stateCounter={stateCounter}
-              settings={clock.settings}
-              setSettings={_setSettings}
             />
             <SettingsNumberInput
               before="Notify"
               after="minutes before chapter ends"
               sx={{ marginInline: "0.5em" }}
-              display={clock.settings.notifyMinutesLeft}
+              display={notifyMinutesLeft}
               field="secondsLeftCount"
-              settings={clock.settings}
-              setSettings={_setSettings}
-              stateCounter={stateCounter}
               devider={60}
             />
             <SettingsToggle
               field="notifyEnds"
               label="Notify when chapters ends"
-              settings={clock.settings}
-              setSettings={_setSettings}
             />
             <SettingsToggle
               field="resetVisualClockEssay"
               label="Reset clock after easay"
-              settings={clock.settings}
               setSettings={(newSettings) => {
-                _setSettings({
+                GloablSettingsManager.set({
                   ...newSettings,
-                  resetVisualClockChapter:
-                    !clock.settings.resetVisualClockEssay,
+                  resetVisualClockChapter: !resetVisualClockEssay,
                 });
               }}
             />
             <SettingsToggle
-              disabled={!clock.settings.resetVisualClockEssay}
+              disabled={!resetVisualClockEssay}
               field="resetVisualClockChapter"
               label="Reset clock after chapters"
-              settings={clock.settings}
-              setSettings={_setSettings}
             />
             <SettingsToggle
               field="chapterPercent"
               label="Circular bar represents current chapter"
-              settings={clock.settings}
-              setSettings={_setSettings}
             />
+            <SettingsToggle field="showReset" label="Show reset button" />
           </Stack>
         </AccordionDetails>
       </Accordion>
     </Container>
-  );
-}
-
-export function ClockSettingsComponent({
-  clockMode,
-  clock,
-}: {
-  clockMode: ClockMode;
-  clock: Clock;
-}) {
-  const [stateCounter, updateState] = useState(0);
-  if (!PersistentSettings.loaded) {
-    (async () => {
-      const loadedSettings = PersistentSettings.load();
-      clock.setSettings(loadedSettings);
-      updateState(stateCounter + 1);
-    })();
-  }
-  return (
-    <Stack>
-      <TimeSettings
-        stateCounter={stateCounter}
-        updateState={updateState}
-        clockMode={clockMode}
-        clock={clock}
-      />
-      <MoreSettings
-        stateCounter={stateCounter}
-        updateState={updateState}
-        clockMode={clockMode}
-        clock={clock}
-      />
-    </Stack>
   );
 }

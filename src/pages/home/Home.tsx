@@ -7,16 +7,16 @@ import {
 import { Button, CircularProgress, Container, Typography } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useState } from "react";
-import { Clock, ClockMode, ViewUpdater } from "../../services/clock";
-
+import { useForceUpdate } from "../../hooks/common";
+import { Clock, ClockMode } from "../../services/clock";
 import { ClockShortcutsDialog } from "./ClockShortcuts";
+import {
+  GloablSettingsManager,
+  GlobalClock,
+  GlobalViewUpdater,
+} from "./globals";
 import "./Home.css";
 import { ClockSettingsComponent } from "./Settings";
-
-const clock = new Clock();
-const CLOCK_INTERVAL = 500;
-const viewUpdater = new ViewUpdater(CLOCK_INTERVAL, clock);
-let timeout: NodeJS.Timeout | undefined;
 
 export default function Home() {
   const [clockMode, setClockMode] = useState<ClockMode>(ClockMode.Off);
@@ -30,8 +30,8 @@ export default function Home() {
         paddingInline: ".3rem",
       }}
     >
-      {ClockDisplay(clock, clockMode, setClockMode)}
-      <ClockSettingsComponent clock={clock} clockMode={clockMode} />
+      {ClockDisplay(GlobalClock, clockMode, setClockMode)}
+      <ClockSettingsComponent clockMode={clockMode} />
     </Container>
   );
 }
@@ -41,42 +41,31 @@ function ClockDisplay(
   clockMode: ClockMode,
   setClockMode: (mode: ClockMode) => void
 ) {
-  const [mode, setMode] = useState(clockMode);
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
-  const [seconds, setSeconds] = useState(0);
-  const [chapterIndex, setChapterIndex] = useState(0);
-  const [percent, setPercent] = useState(0);
-  const [inEssay, setInEssay] = useState(true);
+  const forceUpdate = useForceUpdate();
+  GlobalViewUpdater.state.mode = clockMode;
 
-  viewUpdater.stateCB = (state) => {
-    if (state.mode !== mode) setMode(state.mode);
-    if (state.hours !== hours) setHours(state.hours);
-    if (state.minutes !== minutes) setMinutes(state.minutes);
-    if (state.seconds !== seconds) setSeconds(state.seconds);
-    if (state.chapterIndex !== chapterIndex)
-      setChapterIndex(state.chapterIndex);
-    if (state.percent !== percent) setPercent(state.percent);
-    if (state.inEssay !== inEssay) setInEssay(state.inEssay);
+  GlobalViewUpdater.stateCB = () => {
+    if (GlobalViewUpdater.state.mode !== clockMode)
+      setClockMode(GlobalViewUpdater.state.mode);
+    forceUpdate();
   };
-  if (mode !== clockMode) setClockMode(mode);
 
   const startClick = () => {
     clock.start();
-    viewUpdater.activate();
+    GlobalViewUpdater.activate();
   };
   const stopClick = () => {
-    viewUpdater.now();
+    GlobalViewUpdater.now();
     clock.stop();
-    viewUpdater.deactivate();
-    setMode(ClockMode.Paused);
+    GlobalViewUpdater.deactivate();
+    setClockMode(ClockMode.Paused);
   };
   const continueClick = () => {
     clock.continue();
-    viewUpdater.activate();
+    GlobalViewUpdater.activate();
   };
   const getAction = () => {
-    switch (mode) {
+    switch (GlobalViewUpdater.state.mode) {
       case ClockMode.Off:
       case ClockMode.Done:
         return startClick;
@@ -88,8 +77,13 @@ function ClockDisplay(
   };
   const resetClick = () => {
     clock.reset();
-    viewUpdater.deactivate();
-    viewUpdater.now();
+    GlobalViewUpdater.deactivate();
+    GlobalViewUpdater.now();
+  };
+
+  const showReset = GloablSettingsManager.get("showReset") as boolean;
+  GloablSettingsManager.changeListeners["home"] = (updated) => {
+    if ("showReset" in updated) forceUpdate();
   };
 
   return (
@@ -104,7 +98,7 @@ function ClockDisplay(
       <ClockShortcutsDialog toggle={getAction()} reset={resetClick} />
       <CircularProgress
         variant="determinate"
-        value={percent}
+        value={GlobalViewUpdater.state.percent}
         size={300}
         thickness={0.8}
         color="secondary"
@@ -114,12 +108,16 @@ function ClockDisplay(
         }}
       />
       <Typography variant="h3">
-        {inEssay ? "Essay" : "Chapter " + chapterIndex}
+        {GlobalViewUpdater.state.inEssay
+          ? "Essay"
+          : "Chapter " + GlobalViewUpdater.state.chapterIndex}
       </Typography>
       <Typography variant="h4">
-        {hours > 0 ? hours.toString().padStart(2, "0") + " : " : ""}
-        {minutes.toString().padStart(2, "0")} :{" "}
-        {seconds.toString().padStart(2, "0")}
+        {GlobalViewUpdater.state.hours > 0
+          ? GlobalViewUpdater.state.hours.toString().padStart(2, "0") + " : "
+          : ""}
+        {GlobalViewUpdater.state.minutes.toString().padStart(2, "0")} :{" "}
+        {GlobalViewUpdater.state.seconds.toString().padStart(2, "0")}
       </Typography>
       <Stack direction="row">
         <Button
@@ -131,7 +129,7 @@ function ClockDisplay(
               [ClockMode.Done]: <StartIcon />,
               [ClockMode.On]: <StopIcon />,
               [ClockMode.Paused]: <ContinueIcon />,
-            }[mode]
+            }[GlobalViewUpdater.state.mode]
           }
           onClick={getAction()}
           className={
@@ -140,7 +138,7 @@ function ClockDisplay(
               [ClockMode.Done]: "flickering",
               [ClockMode.On]: "",
               [ClockMode.Paused]: "flickering",
-            }[mode]
+            }[GlobalViewUpdater.state.mode]
           }
         >
           {
@@ -149,10 +147,11 @@ function ClockDisplay(
               [ClockMode.Done]: "Start",
               [ClockMode.On]: "Stop",
               [ClockMode.Paused]: "Continue",
-            }[mode]
+            }[GlobalViewUpdater.state.mode]
           }
         </Button>
         <Button
+          style={{ display: showReset ? "flex" : "none" }}
           color="warning"
           size="large"
           startIcon={<ResetIcon />}
